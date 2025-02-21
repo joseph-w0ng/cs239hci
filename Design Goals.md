@@ -10,6 +10,7 @@ Internet users want a seamless experience while browsing the web, but they are c
 - Maybe add presets so that certain types of cookies are disabled by default, and allow opt-in for other cookies
   
 [+1] Articulate your design goals as you start to implement a high-fidelity prototype of your interactive system.\
+
 [+1] Provide a plan for implementation. Create a timeline, find sync points, assign tasks. Suggestion: Work backwards from the March 4 pilot deadline.\ 
 Feb 24: Finalize design; parallel prototyping and asking users for feedback. Decide on a design to prototype.
 Mar 1: Have a working prototype ready.

@@ -2,7 +2,7 @@
 Internet users want a seamless experience while browsing the web, but they are constantly interrupted by intrusive cookie consent popups. By simplifying this process and providing visualizations, users can understand the data which they are sharing with websites and make an informed choice on the data they choose to share with sites.
 
 [+1] Create a paper prototype. Take + upload pictures or a video of your paper prototype.\
-[Figma Prototype](https://www.figma.com/proto/kGQS7KU01GcNaxs7sVkj7t/CS-239-Figma-Wireframe?node-id=402-157&t=X1BBUhslb7RLZC3o-1)
+[Figma Prototype](https://www.figma.com/proto/kGQS7KU01GcNaxs7sVkj7t/CS-239-Figma-Wireframe?node-id=107-768&t=X1BBUhslb7RLZC3o-1&show-proto-sidebar=1&starting-point-node-id=107%3A768)
 
 [+0.5] Summarize 1-3 takeaways from the feedback you received in class.\
 - Make purpose of buttons clear. Make sure the buttons to activate / de-activate certain cookies is labeled.

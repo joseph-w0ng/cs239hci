@@ -1,5 +1,9 @@
 [+0.5] Update your problem statement.\
-Internet users want a seamless experience while browsing the web, but they are constantly interrupted by intrusive cookie consent popups. By simplifying this process and providing visualizations, users can understand the data which they are sharing with websites and make an informed choice on the data they choose to share with sites.
+Many users are becoming aware of web cookies but lack a clear understanding of their function and implications. According to our user research, about half of internet users recognize the existence of cookies. Their knowledge of cookies, however, is often superficial, making it difficult for the users to distinguish between essential cookies that enhance functionality and those that pose privacy risks.
+
+In addition, most websites are regulated to ask for cookie permission, but the cookie consent requests are often vague and manipulative, leaving users with only options such as accepting all or rejecting. 
+
+This presents an issue that: users want a convenient and secure browsing experience but are frequently interrupted by cookie consent requests that they do not fully comprehend or engage with. The users often feel gaslighted with those manipulative cookie consents while being unaware of what kind of cookies they have shared with the websites. 
 
 [+1] Create a paper prototype. Take + upload pictures or a video of your paper prototype.\
 [Figma Prototype](https://www.figma.com/proto/kGQS7KU01GcNaxs7sVkj7t/CS-239-Figma-Wireframe?node-id=107-768&t=X1BBUhslb7RLZC3o-1&show-proto-sidebar=1&starting-point-node-id=107%3A768)

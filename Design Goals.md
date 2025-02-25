@@ -31,7 +31,8 @@ Mar 1: Have a working prototype ready.\
 Mar 3: Finish basic testing, make sure there are no obvious bugs.
 
 What did each member contribute to this phase of the project?
-Joseph: Built the Figma prototype, contributed with design goals
+
+Joseph: Built the Figma prototype, contributed with design goals\
 Beide: Updated the problem statement, made changes to the Figma prototype, helped with design goals
 
 Did you use a generative AI tool? If so, which and how?

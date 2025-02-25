@@ -29,3 +29,10 @@ Users want a convenient and secure browsing experience but are frequently interr
 Feb 24: Finalize design; parallel prototyping and asking users for feedback. Decide on a design to prototype.\
 Mar 1: Have a working prototype ready.\
 Mar 3: Finish basic testing, make sure there are no obvious bugs.
+
+What did each member contribute to this phase of the project?
+Joseph: Built the Figma prototype, wrote up design goals
+Beide: Updated the problem statement, made changes to the Figma prototype
+
+Did you use a generative AI tool? If so, which and how?
+No

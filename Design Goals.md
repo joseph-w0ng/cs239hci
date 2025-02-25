@@ -41,7 +41,7 @@ What did each member contribute to this phase of the project?
 
 Joseph: Built the Figma prototype, and contributed to design goals\
 Beide: Updated the problem statement, made changes to the Figma prototype, helped with design goals
-Kalyan: Think about prototyping
+Kalyan: Thought about prototyping
 
 Did you use a generative AI tool? If so, which and how?
 No

@@ -15,7 +15,8 @@ This presents an issue that: users want a convenient and secure browsing experie
   
 [+1] Articulate your design goals as you start to implement a high-fidelity prototype of your interactive system.
 
-[+1] Provide a plan for implementation. Create a timeline, find sync points, assign tasks. Suggestion: Work backwards from the March 4 pilot deadline. 
-Feb 24: Finalize design; parallel prototyping and asking users for feedback. Decide on a design to prototype.
-Mar 1: Have a working prototype ready.
-Mar 3: Finish basic testing, make sure there are no obvious bugs.
+[+1] Provide a plan for implementation. Create a timeline, find sync points, assign tasks. Suggestion: Work backwards from the March 4 pilot deadline.
+
+Feb 24: Finalize design; parallel prototyping and asking users for feedback. Decide on a design to prototype.\
+Mar 1: Have a working prototype ready.\
+Mar 3: Finish basic testing, make sure there are no obvious bugs.\

@@ -3,6 +3,8 @@
 To start the development server:
 
 ```bash
+pnpm i
+
 pnpm run dev
 
 # or start the server and open the app in a new browser tab

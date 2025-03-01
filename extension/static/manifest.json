@@ -1,11 +1,19 @@
 {
-	"name": "My Chrome Extension",
-	"description": "A browser extension made with Svelte Kit",
+	"name": "Active Cookies Viewer",
+	"description": "Displays the current active cookies for the active website.",
 	"version": "1.0.0",
 	"manifest_version": 3,
 	"action": {
-		"default_title": "Svelte Extension",
+	  "default_title": "View Active Cookies",
 		"default_icon": "favicon.png",
-		"default_popup": "index.html"
-	}
+		"default_popup": "popup.html"
+	},
+	"permissions": [
+		"cookies",
+		"activeTab"
+	  ],
+	"host_permissions": [
+		"<all_urls>"
+	  ]
 }
+

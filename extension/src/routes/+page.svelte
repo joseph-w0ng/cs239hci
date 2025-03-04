@@ -75,6 +75,8 @@
 		const url = `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`;
 
 		try {
+			let cookieToBlock = {"name": cookie.name, "domain": cookie.domain}
+			console.log(cookieToBlock);
 			await chrome.cookies.remove({
 				url,
 				name: cookie.name,
@@ -89,6 +91,8 @@
 			setTimeout(() => {
 				delete deleteStatus[cookie.name];
 			}, 3000);
+			
+			chrome.runtime.sendMessage({ action: "blockCookies",  cookieToBlock });
 		} catch (e) {
 			deleteStatus[cookie.name] = 'Error: Could not delete';
 			console.error('Error deleting cookie:', e);

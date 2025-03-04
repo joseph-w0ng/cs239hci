@@ -14,6 +14,8 @@
 	let selectedCookies: Set<string> = new Set();
 	let cookiesDeleted = 0;
 	let isDeleting = false;
+	let selectedCookie: CookieWithCategory | null = null;
+
 
 	function groupCookiesByCategory(cookieList: CookieWithCategory[]) {
 		const grouped: Record<string, CookieWithCategory[]> = {};
@@ -57,6 +59,7 @@
 		};
 		return stats;
 	}
+
 
 	async function deleteCookie(cookie: CookieWithCategory) {
 		if (!isChrome) {
@@ -192,6 +195,15 @@
 			(cookie) => cookieCategories[cookie.category as cookieCategory].canDelete
 		);
 	}
+
+	function selectCookie(cookie: CookieWithCategory) {
+		selectedCookie = cookie;
+	}
+
+	function closeOverlay() {
+		selectedCookie = null;
+	}
+
 </script>
 
 <main class="mx-auto w-[576px] p-4">
@@ -333,19 +345,25 @@
 					<p class="mb-2 text-sm italic">
 						{cookieCategories[category as keyof typeof cookieCategories].description}
 					</p>
-
 					{#each categoryCookies as cookie}
-						<div class="relative mb-2 rounded border p-3 hover:bg-gray-50">
+						<div 
+						role="button"
+						tabindex="0"
+						on:click={() => selectCookie(cookie)}
+						on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectedCookie = cookie; }}
+							class="relative mb-2 rounded border p-3 hover:bg-gray-50"
+						>
 							{#if bulkActionMode && cookieCategories[cookie.category as keyof typeof cookieCategories].canDelete}
 								<div class="absolute left-1 top-1">
 									<input
 										type="checkbox"
 										checked={selectedCookies.has(cookie.name)}
 										on:change={() => toggleCookieSelection(cookie.name)}
+										on:click|stopPropagation
 									/>
 								</div>
 							{/if}
-
+					
 							<div class="flex justify-between" style={bulkActionMode ? 'padding-left: 20px;' : ''}>
 								<div class="font-medium">{cookie.name}</div>
 								<div class="flex items-center gap-2">
@@ -353,16 +371,14 @@
 										{cookie.secure ? '🔒 Secure' : ''}
 										{cookie.httpOnly ? '🔐 HttpOnly' : ''}
 									</div>
-
+					
 									{#if cookieCategories[cookie.category as keyof typeof cookieCategories].canDelete && !bulkActionMode}
 										{#if deleteStatus[cookie.name]}
-											<span class="text-xs italic">
-												{deleteStatus[cookie.name]}
-											</span>
+											<span class="text-xs italic">{deleteStatus[cookie.name]}</span>
 										{:else}
 											<button
 												class="ml-2 rounded bg-red-50 px-2 py-0.5 text-xs text-red-700 hover:bg-red-100"
-												on:click={() => deleteCookie(cookie)}
+												on:click|stopPropagation={() => deleteCookie(cookie)}
 											>
 												Delete
 											</button>
@@ -370,6 +386,7 @@
 									{/if}
 								</div>
 							</div>
+							<!-- Remaining cookie details here -->
 							<div class="text-sm text-gray-700">{cookie.description}</div>
 							<div class="mt-1 text-xs text-gray-500">
 								Expires: {formatExpiryDate(cookie.expirationDate)}
@@ -388,6 +405,27 @@
 				</div>
 			{/if}
 		{/each}
+		{#if selectedCookie}
+		<div class="overlay" >
+			<div class="overlay-content" >
+				<button class="close-button" on:click={closeOverlay}>Close</button>
+				<h2>{selectedCookie.name}</h2>
+				<p><strong>Description:</strong> {selectedCookie.description}</p>
+				<p><strong>Domain:</strong> {selectedCookie.domain}</p>
+				<p><strong>Path:</strong> {selectedCookie.path}</p>
+				<p><strong>Expires:</strong> {formatExpiryDate(selectedCookie.expirationDate)}</p>
+				{#if selectedCookie.secure}
+					<p><strong>Secure:</strong> Yes</p>
+				{/if}
+				{#if selectedCookie.httpOnly}
+					<p><strong>HttpOnly:</strong> Yes</p>
+				{/if}
+				<!-- Add any additional detailed info as needed -->
+			</div>
+		</div>
+	{/if}
+		
+		
 
 		<div class="mt-4 flex items-center justify-between text-sm text-gray-500">
 			<button class="underline" on:click={() => (showRawData = !showRawData)}>
@@ -431,5 +469,37 @@
 	.tooltip:hover .tooltiptext {
 		visibility: visible;
 		opacity: 1;
+	}
+
+	.overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+
+	.overlay-content {
+		background: #fff;
+		padding: 20px;
+		border-radius: 5px;
+		max-width: 500px;
+		width: 90%;
+		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+	}
+
+	.close-button {
+
+		top: 10px;
+		right: 10px;
+		background: transparent;
+		border: none;
+		font-size: 16px;
+		cursor: pointer;
 	}
 </style>

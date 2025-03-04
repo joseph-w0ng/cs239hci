@@ -2,6 +2,10 @@
 	import { onMount } from 'svelte';
 	import fake_cookie_data from '$lib/data/cookies.json';
 	import categorizeCookie, { cookieCategories } from '$lib/categorize';
+	import Breakdown from '$lib/components/custom/breakdown.svelte';
+	import BulkActionsBar from '$lib/components/custom/bulkActionsBar.svelte';
+	import CookieList from '$lib/components/custom/cookieList.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 
 	let cookies: CookieWithCategory[] = [];
 	let groupedCookies: Record<string, CookieWithCategory[]> = {};
@@ -14,8 +18,6 @@
 	let selectedCookies: Set<string> = new Set();
 	let cookiesDeleted = 0;
 	let isDeleting = false;
-	let selectedCookie: CookieWithCategory | null = null;
-
 
 	function groupCookiesByCategory(cookieList: CookieWithCategory[]) {
 		const grouped: Record<string, CookieWithCategory[]> = {};
@@ -36,13 +38,6 @@
 		}
 	}
 
-	function formatExpiryDate(expiryTime?: number) {
-		if (!expiryTime) return 'Session cookie (expires when browser closes)';
-
-		const expiryDate = new Date(expiryTime * 1000);
-		return expiryDate.toLocaleString();
-	}
-
 	function getCookieStats() {
 		const total = cookies.length;
 		const stats = {
@@ -55,7 +50,6 @@
 		};
 		return stats;
 	}
-
 
 	async function deleteCookie(cookie: CookieWithCategory) {
 		if (!isChrome) {
@@ -75,7 +69,7 @@
 		const url = `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`;
 
 		try {
-			let cookieToBlock = {"name": cookie.name, "domain": cookie.domain}
+			let cookieToBlock = { name: cookie.name, domain: cookie.domain };
 			console.log(cookieToBlock);
 			await chrome.cookies.remove({
 				url,
@@ -91,8 +85,8 @@
 			setTimeout(() => {
 				delete deleteStatus[cookie.name];
 			}, 3000);
-			
-			chrome.runtime.sendMessage({ action: "blockCookies",  cookieToBlock });
+
+			chrome.runtime.sendMessage({ action: 'blockCookies', cookieToBlock });
 		} catch (e) {
 			deleteStatus[cookie.name] = 'Error: Could not delete';
 			console.error('Error deleting cookie:', e);
@@ -125,6 +119,7 @@
 				await deleteCookie(cookie);
 			}
 		}
+		cookies = cookies;
 		selectedCookies.clear();
 		bulkActionMode = false;
 		isDeleting = false;
@@ -189,34 +184,24 @@
 			(cookie) => cookieCategories[cookie.category as cookieCategory].canDelete
 		);
 	}
-
-	function selectCookie(cookie: CookieWithCategory) {
-		selectedCookie = cookie;
-	}
-
-	function closeOverlay() {
-		selectedCookie = null;
-	}
-
 </script>
 
-<main class="mx-auto w-[576px] p-4">
+<main class="mx-auto flex w-[576px] flex-col gap-4 p-4">
 	<header class="mb-4 flex items-center justify-between">
-		<div>
-			<h1 class="text-xl font-bold">Cookie Manager</h1>
-			<p class="text-sm">Domain: <strong>{activeDomain}</strong></p>
+		<div class="flex items-center gap-3">
+			<img class="h-8 w-8" src="/favicon.png" alt="Logo" />
+			<div>
+				<h1 class="text-xl font-bold">Cookie Clear</h1>
+				<p class="text-sm">Domain: <strong>{activeDomain}</strong></p>
+			</div>
 		</div>
 
 		<div class="flex gap-2">
-			<button
-				class="rounded bg-gray-200 px-2 py-1 text-xs hover:bg-gray-300"
-				on:click={reloadCookies}
-				title="Reload cookies from current page"
-			>
-				↻ Reload
-			</button>
+			<Button variant="outline" onclick={reloadCookies}>↻ Reload</Button>
 
-			{#if getDeletableCookies().length > 0}
+			<Button>Manage Block List</Button>
+
+			<!-- {#if getDeletableCookies().length > 0}
 				<button
 					class="rounded bg-gray-200 px-2 py-1 text-xs hover:bg-gray-300"
 					on:click={() => (bulkActionMode = !bulkActionMode)}
@@ -224,19 +209,25 @@
 				>
 					{bulkActionMode ? '✓ Select mode' : '☐ Select cookies'}
 				</button>
-			{/if}
+			{/if} -->
 		</div>
 	</header>
 
+	<Breakdown {cookies} {groupedCookies} />
+
+	<BulkActionsBar {cookies} {groupedCookies} {deleteCookiesByCategory} />
+
+	<CookieList {deleteSelectedCookies} {cookies} {groupedCookies} {deleteCookie} />
+
 	{#if cookies.length === 0}
-		<div class="rounded bg-gray-100 p-4 text-center">
+		<!-- <div class="rounded bg-gray-100 p-4 text-center">
 			{cookiesDeleted > 0
 				? 'All cookies have been deleted!'
 				: 'Loading cookies or no cookies found for this page.'}
-		</div>
+		</div> -->
 	{:else}
 		<!-- Cookie Summary -->
-		<div class="mb-4 rounded bg-gray-100 p-3">
+		<!-- <div class="mb-4 rounded bg-gray-100 p-3">
 			<div class="flex items-center justify-between">
 				<h2 class="font-semibold">Summary</h2>
 				<span class="text-sm">{cookies.length} cookies found</span>
@@ -260,10 +251,10 @@
 					{/if}
 				{/each}
 			</div>
-		</div>
+		</div> -->
 
 		<!-- Bulk actions bar -->
-		{#if bulkActionMode && selectedCookies.size > 0}
+		<!-- {#if bulkActionMode && selectedCookies.size > 0}
 			<div class="mb-4 flex items-center justify-between rounded bg-blue-50 p-2">
 				<span>{selectedCookies.size} cookie{selectedCookies.size !== 1 ? 's' : ''} selected</span>
 				<div class="flex gap-2">
@@ -282,10 +273,10 @@
 					</button>
 				</div>
 			</div>
-		{/if}
+		{/if} -->
 
 		<!-- Category Buttons -->
-		<div class="mb-4 flex flex-wrap gap-2">
+		<!-- <div class="mb-4 flex flex-wrap gap-2">
 			{#each Object.entries(cookieCategories) as [category, info]}
 				{#if groupedCookies[category]?.length}
 					<div class="flex items-center">
@@ -313,10 +304,10 @@
 					</div>
 				{/if}
 			{/each}
-		</div>
+		</div> -->
 
 		<!-- Cookie List by Category -->
-		{#each Object.entries(groupedCookies) as [category, categoryCookies]}
+		<!-- {#each Object.entries(groupedCookies) as [category, categoryCookies]}
 			{#if (selectedCategory === category || !selectedCategory) && categoryCookies.length > 0}
 				<div class="mb-4">
 					<div class="mb-2 flex items-center gap-2">
@@ -340,11 +331,13 @@
 						{cookieCategories[category as keyof typeof cookieCategories].description}
 					</p>
 					{#each categoryCookies as cookie}
-						<div 
-						role="button"
-						tabindex="0"
-						on:click={() => selectCookie(cookie)}
-						on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') selectedCookie = cookie; }}
+						<div
+							role="button"
+							tabindex="0"
+							on:click={() => selectCookie(cookie)}
+							on:keydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') selectedCookie = cookie;
+							}}
 							class="relative mb-2 rounded border p-3 hover:bg-gray-50"
 						>
 							{#if bulkActionMode && cookieCategories[cookie.category as keyof typeof cookieCategories].canDelete}
@@ -357,7 +350,7 @@
 									/>
 								</div>
 							{/if}
-					
+
 							<div class="flex justify-between" style={bulkActionMode ? 'padding-left: 20px;' : ''}>
 								<div class="font-medium">{cookie.name}</div>
 								<div class="flex items-center gap-2">
@@ -365,7 +358,7 @@
 										{cookie.secure ? '🔒 Secure' : ''}
 										{cookie.httpOnly ? '🔐 HttpOnly' : ''}
 									</div>
-					
+
 									{#if cookieCategories[cookie.category as keyof typeof cookieCategories].canDelete && !bulkActionMode}
 										{#if deleteStatus[cookie.name]}
 											<span class="text-xs italic">{deleteStatus[cookie.name]}</span>
@@ -380,7 +373,6 @@
 									{/if}
 								</div>
 							</div>
-							<!-- Remaining cookie details here -->
 							<div class="text-sm text-gray-700">{cookie.description}</div>
 							<div class="mt-1 text-xs text-gray-500">
 								Expires: {formatExpiryDate(cookie.expirationDate)}
@@ -400,28 +392,25 @@
 			{/if}
 		{/each}
 		{#if selectedCookie}
-		<div class="overlay" >
-			<div class="overlay-content" >
-				<button class="close-button" on:click={closeOverlay}>Close</button>
-				<h2>{selectedCookie.name}</h2>
-				<p><strong>Description:</strong> {selectedCookie.description}</p>
-				<p><strong>Domain:</strong> {selectedCookie.domain}</p>
-				<p><strong>Path:</strong> {selectedCookie.path}</p>
-				<p><strong>Expires:</strong> {formatExpiryDate(selectedCookie.expirationDate)}</p>
-				{#if selectedCookie.secure}
-					<p><strong>Secure:</strong> Yes</p>
-				{/if}
-				{#if selectedCookie.httpOnly}
-					<p><strong>HttpOnly:</strong> Yes</p>
-				{/if}
-				<!-- Add any additional detailed info as needed -->
+			<div class="overlay">
+				<div class="overlay-content">
+					<button class="close-button" on:click={closeOverlay}>Close</button>
+					<h2>{selectedCookie.name}</h2>
+					<p><strong>Description:</strong> {selectedCookie.description}</p>
+					<p><strong>Domain:</strong> {selectedCookie.domain}</p>
+					<p><strong>Path:</strong> {selectedCookie.path}</p>
+					<p><strong>Expires:</strong> {formatExpiryDate(selectedCookie.expirationDate)}</p>
+					{#if selectedCookie.secure}
+						<p><strong>Secure:</strong> Yes</p>
+					{/if}
+					{#if selectedCookie.httpOnly}
+						<p><strong>HttpOnly:</strong> Yes</p>
+					{/if}
+				</div>
 			</div>
-		</div>
-	{/if}
-		
-		
+		{/if} -->
 
-		<div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+		<!-- <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
 			<button class="underline" on:click={() => (showRawData = !showRawData)}>
 				{showRawData ? 'Hide raw cookie data' : 'Show raw cookie data'}
 			</button>
@@ -433,67 +422,6 @@
 					>
 				</div>
 			{/if}
-		</div>
+		</div> -->
 	{/if}
 </main>
-
-<style>
-	.tooltip {
-		position: relative;
-	}
-
-	.tooltip .tooltiptext {
-		visibility: hidden;
-		background-color: #333;
-		color: #fff;
-		text-align: center;
-		border-radius: 4px;
-		padding: 4px 8px;
-		position: absolute;
-		z-index: 1;
-		bottom: 125%;
-		left: 50%;
-		transform: translateX(-50%);
-		opacity: 0;
-		transition: opacity 0.3s;
-		white-space: nowrap;
-		font-size: 12px;
-	}
-
-	.tooltip:hover .tooltiptext {
-		visibility: visible;
-		opacity: 1;
-	}
-
-	.overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-color: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-
-	.overlay-content {
-		background: #fff;
-		padding: 20px;
-		border-radius: 5px;
-		max-width: 500px;
-		width: 90%;
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-	}
-
-	.close-button {
-
-		top: 10px;
-		right: 10px;
-		background: transparent;
-		border: none;
-		font-size: 16px;
-		cursor: pointer;
-	}
-</style>

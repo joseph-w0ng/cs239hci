@@ -36,10 +36,10 @@ chrome.cookies.onChanged.addListener(changeInfo => {
       console.log(changeInfo);
 
       chrome.cookies.getAll({ url }, (cookies) => {
-        console.log("Cookies retrieved:", cookies);
-        cookies.forEach((cookie) => {
-          console.log(`Cookie: ${cookie.name}, HttpOnly: ${cookie.httpOnly}, SameSite: ${cookie.sameSite}`);
-        });
+        // console.log("Cookies retrieved:", cookies);
+        // cookies.forEach((cookie) => {
+        //   console.log(`Cookie: ${cookie.name}, HttpOnly: ${cookie.httpOnly}, SameSite: ${cookie.sameSite}`);
+        // });
         
         let size = cookies.length.toString();
         chrome.action.setBadgeText({ text: size }); // Update badge
@@ -64,10 +64,10 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
       // Fetch cookies for the active domain
       chrome.cookies.getAll({ url }, (cookies) => {
-        console.log("Cookies retrieved:", cookies);
-        cookies.forEach((cookie) => {
-          console.log(`Cookie: ${cookie.name}, HttpOnly: ${cookie.httpOnly}, SameSite: ${cookie.sameSite}`);
-        });
+        // console.log("Cookies retrieved:", cookies);
+        // cookies.forEach((cookie) => {
+        //   console.log(`Cookie: ${cookie.name}, HttpOnly: ${cookie.httpOnly}, SameSite: ${cookie.sameSite}`);
+        // });
         
         let size = cookies.length.toString();
         chrome.action.setBadgeText({ text: size }); // Update badge
@@ -86,10 +86,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
       // Fetch cookies for the active domain
       chrome.cookies.getAll({ url  }, (cookies) => {
-        console.log("Cookies retrieved:", cookies);
-        cookies.forEach((cookie) => {
-          console.log(`Cookie: ${cookie.name}, HttpOnly: ${cookie.httpOnly}, SameSite: ${cookie.sameSite}`);
-        });
+        // console.log("Cookies retrieved:", cookies);
+        // cookies.forEach((cookie) => {
+        //   console.log(`Cookie: ${cookie.name}, HttpOnly: ${cookie.httpOnly}, SameSite: ${cookie.sameSite}`);
+        // });
         
         let size = cookies.length.toString();
         chrome.action.setBadgeText({ text: size }); // Update badge
@@ -98,3 +98,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   });
 });
 
+chrome.runtime.onInstalled.addListener(() => {
+  // Set the badge text to "0" when the extension is installed or initialized
+  chrome.action.setBadgeText({ text: '0' });
+});

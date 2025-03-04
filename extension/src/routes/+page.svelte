@@ -159,10 +159,6 @@
 		});
 	}
 
-	chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-		reloadCookies();
-    });
-
 	onMount(() => {
 		if (isChrome) {
 			chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

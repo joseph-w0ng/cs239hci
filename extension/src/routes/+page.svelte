@@ -25,6 +25,10 @@
 		return grouped;
 	}
 
+	function updateBadgeCount(count: number) {
+		chrome.action.setBadgeText({ text: count.toString() });
+	}
+
 	function extractDomain(url: string) {
 		try {
 			const urlObj = new URL(url);
@@ -147,12 +151,17 @@
 			activeDomain = extractDomain(url);
 
 			chrome.cookies.getAll({ url }, (cookieArray) => {
+				updateBadgeCount(cookieArray.length);
 				cookies = cookieArray.map(categorizeCookie);
 				groupedCookies = groupCookiesByCategory(cookies);
 				cookiesDeleted = 0;
 			});
 		});
 	}
+
+	chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+		reloadCookies();
+    });
 
 	onMount(() => {
 		if (isChrome) {
@@ -164,6 +173,7 @@
 				activeDomain = extractDomain(url);
 
 				chrome.cookies.getAll({ url }, (cookieArray) => {
+					updateBadgeCount(cookieArray.length);
 					cookies = cookieArray.map(categorizeCookie);
 					groupedCookies = groupCookiesByCategory(cookies);
 				});

@@ -25,8 +25,8 @@ export const cookieCategories: Record<
         canDelete: true
     },
     essential: {
-        name: 'Essential',
-        description: 'Necessary for the website to function properly',
+        name: 'Necessary',
+        description: 'Necessary for the website to function properly, these cookies cannot be deleted',
         color: 'oklch(0.627 0.194 149.214)',
         secondaryColor: 'oklch(0.962 0.044 156.743)',
         canDelete: false

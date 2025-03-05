@@ -2,18 +2,12 @@ export const cookieCategories: Record<
     cookieCategory,
     { name: string; description: string; color: string; secondaryColor: string, canDelete: boolean }
 > = {
-    essential: {
-        name: 'Essential',
-        description: 'Necessary for the website to function properly',
-        color: 'oklch(0.627 0.194 149.214)',
-        secondaryColor: 'oklch(0.962 0.044 156.743)',
-        canDelete: false
-    },
-    functional: {
-        name: 'Functional',
-        description: 'Enable specific functionality and preferences',
-        color: 'oklch(0.685 0.169 237.323)',
-        secondaryColor: 'oklch(0.951 0.026 236.824)',
+
+    marketing: {
+        name: 'Marketing',
+        description: 'Used for advertising and tracking across websites',
+        color: 'oklch(0.637 0.237 25.331)',
+        secondaryColor: 'oklch(0.936 0.032 17.717)',
         canDelete: true
     },
     analytics: {
@@ -23,12 +17,19 @@ export const cookieCategories: Record<
         secondaryColor: 'oklch(0.943 0.029 294.588)',
         canDelete: true
     },
-    marketing: {
-        name: 'Marketing',
-        description: 'Used for advertising and tracking across websites',
-        color: 'oklch(0.637 0.237 25.331)',
-        secondaryColor: 'oklch(0.936 0.032 17.717)',
+    functional: {
+        name: 'Functional',
+        description: 'Enable specific functionality and preferences',
+        color: 'oklch(0.685 0.169 237.323)',
+        secondaryColor: 'oklch(0.951 0.026 236.824)',
         canDelete: true
+    },
+    essential: {
+        name: 'Essential',
+        description: 'Necessary for the website to function properly',
+        color: 'oklch(0.627 0.194 149.214)',
+        secondaryColor: 'oklch(0.962 0.044 156.743)',
+        canDelete: false
     },
     unknown: {
         name: 'Unknown',

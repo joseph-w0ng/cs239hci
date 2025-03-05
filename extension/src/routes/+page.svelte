@@ -7,6 +7,7 @@
 	import CookieList from '$lib/components/custom/cookieList.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 
+
 	let cookies: CookieWithCategory[] = [];
 	let groupedCookies: Record<string, CookieWithCategory[]> = {};
 	let isChrome = typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
@@ -18,6 +19,8 @@
 	let selectedCookies: Set<string> = new Set();
 	let cookiesDeleted = 0;
 	let isDeleting = false;
+
+
 
 	function groupCookiesByCategory(cookieList: CookieWithCategory[]) {
 		const grouped: Record<string, CookieWithCategory[]> = {};

@@ -93,7 +93,31 @@
 				delete deleteStatus[cookie.name];
 			}, 3000);
 
-			chrome.runtime.sendMessage({ action: 'blockCookies', cookieToBlock });
+
+			if (isChrome) {
+				chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+					if (!tabs.length) return;
+					const url = tabs[0].url;
+					if (!url) return;
+
+					activeDomain = extractDomain(url);
+				});
+			}
+
+			chrome.storage.local.get(['siteData'], function(result) {
+				let siteData = result.siteData;
+
+				if (!Array.isArray(siteData[activeDomain])) {
+        			siteData[activeDomain] = [];
+    			}
+
+				siteData[activeDomain].push(cookieToBlock);
+				console.log("Updated siteData:" + siteData)
+				
+				chrome.storage.local.set({ siteData: siteData });
+			});
+			
+			chrome.runtime.sendMessage({ action: 'blockCookies', activeDomain});
 		} catch (e) {
 			deleteStatus[cookie.name] = 'Error: Could not delete';
 			console.error('Error deleting cookie:', e);

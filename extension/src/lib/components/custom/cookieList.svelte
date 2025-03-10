@@ -20,7 +20,7 @@
 		deleteSelectedCookies: (cookies: CookieWithCategory[]) => Promise<void>;
 	} = $props();
 
-	let selectMode = $state(false);
+	// let selectMode = $state(false);
 	let selected = $state(new SvelteSet<CookieWithCategory>());
 
 	function onSelect(cookie: CookieWithCategory) {
@@ -37,15 +37,18 @@
 <div class="flex w-full items-center justify-between self-end">
 	<Button
 		variant="destructive"
-		disabled={!selectMode || selected.size == 0}
+		disabled={selected.size == 0}
 		onclick={() => {
 			deleteSelectedCookies(Array.from(selected));
 			selected.clear();
 		}}
 	>
-		Delete Selected
+		Block Selected
 	</Button>
-	<div class="flex items-center gap-2">
+	<div class="text-sm">
+		<strong>{selected.size}</strong> selected
+	</div>
+	<!-- <div class="flex items-center gap-2">
 		<Switch
 			id="select-mode"
 			bind:checked={selectMode}
@@ -56,7 +59,7 @@
 			}}
 		/>
 		<Label for="select-mode">Selectable</Label>
-	</div>
+	</div> -->
 </div>
 
 <Accordion.Root type="single" class="w-full">
@@ -70,20 +73,20 @@
 							class="h-3 w-3 rounded-full"
 							style="background-color: {cookieCategory.color}"
 						></div>
-						<span>
-							<span class="text-base font-semibold">
+						<div class="flex flex-col items-start justify-center">
+							<div class="text-base font-semibold">
 								{cookieCategory.name} ({categoryCookies.length})
-							</span>
-							<span class="text-muted-foreground text-xs font-normal italic">
+							</div>
+							<div class="text-muted-foreground text-xs font-normal italic">
 								({cookieCategory.description})
-							</span>
-						</span>
+							</div>
+						</div>
 					</div>
 				</Accordion.Trigger>
 				<Accordion.Content>
 					<div class="flex flex-col gap-2">
 						{#each categoryCookies as cookie}
-							<IndividualCookie {cookie} {deleteCookie} selectable={selectMode} {onSelect} />
+							<IndividualCookie {cookie} {deleteCookie} {onSelect} />
 						{/each}
 					</div>
 				</Accordion.Content>

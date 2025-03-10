@@ -49,6 +49,7 @@
 	},
 	"dependencies": {
 		"@google/generative-ai": "^0.24.0",
+		"generative-ai": "link:@types/@google/generative-ai",
 		"tiny-glob": "^0.2.9"
 	}
 }

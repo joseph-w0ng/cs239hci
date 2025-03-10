@@ -3,4 +3,6 @@
 	let { children } = $props();
 </script>
 
-{@render children()}
+<main class="mx-auto flex w-[576px] flex-col gap-4 p-4">
+	{@render children()}
+</main>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cookieCategories } from '$lib/categorize';
 	import * as Tooltip from '$lib/components/ui/tooltip/';
-	import { X } from 'lucide-svelte';
+	import { Trash2 } from 'lucide-svelte';
 
 	let {
 		cookies = $bindable(),
@@ -24,12 +24,12 @@
 					style="border-color: {cookieCategory.color}; color: {cookieCategory.color}; background-color: {cookieCategory.secondaryColor}"
 				>
 					<p>{cookieCategory.name} ({categoryCookies.length})</p>
-					{#if cookieCategory.name !== 'Essential'}
-						<Tooltip.Provider>
+					{#if cookieCategory.name !== 'Necessary'}
+						<Tooltip.Provider delayDuration={0}>
 							<Tooltip.Root>
 								<Tooltip.Trigger class="h-4 w-4">
 									<button onclick={() => deleteCookiesByCategory(category)}>
-										<X class="h-4 w-4" />
+										<Trash2 class="h-4 w-4" />
 									</button>
 								</Tooltip.Trigger>
 								<Tooltip.Content>Remove and Block</Tooltip.Content>

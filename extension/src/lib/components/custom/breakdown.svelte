@@ -29,7 +29,7 @@
 			<div class="flex h-6 w-full overflow-clip rounded-md">
 				{#each Object.entries(groupedCookies) as [category, categoryCookies]}
 					{@const cookieCategory = cookieCategories[category as keyof typeof cookieCategories]}
-					<Tooltip.Provider>
+					<Tooltip.Provider delayDuration={0}>
 						<Tooltip.Root>
 							<Tooltip.Trigger
 								class="h-full"

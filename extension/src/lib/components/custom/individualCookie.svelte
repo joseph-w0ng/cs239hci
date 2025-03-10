@@ -5,22 +5,21 @@
 	import { Card } from '../ui/card';
 	import * as Dialog from '../ui/dialog';
 	import Checkbox from '../ui/checkbox/checkbox.svelte';
-	import { GoogleGenerativeAI } from "@google/generative-ai";
+	import { GoogleGenerativeAI } from '@google/generative-ai';
+	import * as Tooltip from '../ui/tooltip';
 
-	const apiKey = 'enter api key';
+	const apiKey = 'AIzaSyDY-5W5WlZYx4N4en_xZiLNgzps_ejTEco';
 	const genAI = new GoogleGenerativeAI(apiKey);
-	const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+	const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 	let {
 		cookie,
 		deleteCookie,
-		selectable,
 		onSelect
 	}: {
 		cookie: CookieWithCategory;
 		deleteCookie: (cookie: CookieWithCategory) => Promise<void>;
 		onSelect: (cookie: CookieWithCategory) => void;
-		selectable: boolean;
 	} = $props();
 
 	let cookieExplanation: string | null = $state(null);
@@ -52,8 +51,8 @@
 			const response = result.response;
 			cookieExplanation = response.text();
 		} catch (error) {
-			console.error("Error generating cookie explanation:", error);
-			error = "Could not generate explanation. Please check your Gemini API Key and try again.";
+			console.error('Error generating cookie explanation:', error);
+			error = 'Could not generate explanation. Please check your Gemini API Key and try again.';
 		} finally {
 			isLoading = false;
 		}
@@ -63,7 +62,7 @@
 <Dialog.Root>
 	<Dialog.Trigger>
 		<Card class="flex items-center gap-4 rounded-sm p-4 text-left shadow-none">
-			{#if selectable}
+			{#if cookie.category !== 'essential'}
 				<Checkbox
 					onclick={(e) => {
 						e.stopPropagation();
@@ -75,32 +74,51 @@
 			<div class="w-full">
 				<div class="flex items-center justify-between">
 					<h3 class="text-base font-semibold">{cookie.name}</h3>
-					<div class="flex items-center gap-2 relative">
+					<div>
 						{#if cookie.secure}
-							<div class="security-badge-container">
-								<Badge class="text-xs font-normal" variant="outline">🔒 Secure</Badge>
-								<div class="security-explanation">
-									Secure cookies are only transmitted over HTTPS, protecting them from being intercepted on unsecured networks.
-								</div>
-							</div>
+							<Tooltip.Provider delayDuration={0}>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<Badge class="text-xs font-normal" variant="outline">🔒 Secure</Badge>
+									</Tooltip.Trigger>
+									<Tooltip.Content class="max-w-64 text-center">
+										Secure cookies are only transmitted over HTTPS, protecting them from being
+										intercepted on unsecured networks.
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</Tooltip.Provider>
 						{/if}
 						{#if cookie.httpOnly}
-							<div class="security-badge-container">
-								<Badge class="text-xs font-normal" variant="outline">🔐 HttpOnly</Badge>
-								<div class="security-explanation">
-									HTTP-only cookies cannot be accessed by client-side scripts, helping prevent cross-site scripting (XSS) attacks.
-								</div>
-							</div>
+							<Tooltip.Provider delayDuration={0}>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<Badge class="text-xs font-normal" variant="outline">🔐 HttpOnly</Badge>
+									</Tooltip.Trigger>
+									<Tooltip.Content class="max-w-64 text-center">
+										HTTP-only cookies cannot be accessed by client-side scripts, helping prevent
+										cross-site scripting (XSS) attacks.
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</Tooltip.Provider>
 						{/if}
 						{#if cookie.category !== 'essential'}
-							<Badge
-								onclick={(e) => {
-									e.stopPropagation();
-									deleteCookie(cookie);
-								}}
-								class="text-xs font-normal"
-								variant="destructive">Delete</Badge
-							>
+							<Tooltip.Provider delayDuration={0}>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										<Badge
+											onclick={(e) => {
+												e.stopPropagation();
+												deleteCookie(cookie);
+											}}
+											class="text-xs font-normal"
+											variant="destructive">Block</Badge
+										>
+									</Tooltip.Trigger>
+									<Tooltip.Content class="max-w-64 text-center">
+										Delete and block this cookie from being repopulated.
+									</Tooltip.Content>
+								</Tooltip.Root>
+							</Tooltip.Provider>
 						{/if}
 					</div>
 				</div>
@@ -111,35 +129,38 @@
 			</div>
 		</Card>
 	</Dialog.Trigger>
-	<!-- Rest of your existing Dialog content -->
+	<Dialog.Content class="rounded-lg">
+		<Dialog.Header>
+			<Dialog.Title>Raw Cookie Details</Dialog.Title>
+			<Dialog.Description class="flex flex-col gap-2">
+				<div>
+					<div>Domain: {cookie.domain}</div>
+					<div>Path: {cookie.path}</div>
+					<div>
+						Value: {cookie.value.substring(0, 50)}{cookie.value.length > 50 ? '...' : ''}
+					</div>
+				</div>
+				<Button class="w-full" onclick={generateCookieExplanation} disabled={isLoading}>
+					<Sparkles class="h-4 w-4" />
+					{#if isLoading}
+						Generating Explanation...
+					{:else}
+						Explain Cookie Details
+					{/if}
+				</Button>
+
+				{#if cookieExplanation}
+					<div class="mt-4 rounded bg-gray-100 p-3">
+						<p class="text-sm">{cookieExplanation}</p>
+					</div>
+				{/if}
+
+				{#if error}
+					<div class="mt-4 rounded bg-red-100 p-3 text-red-800">
+						<p class="text-sm">{error}</p>
+					</div>
+				{/if}
+			</Dialog.Description>
+		</Dialog.Header>
+	</Dialog.Content>
 </Dialog.Root>
-
-<style>
-	.security-badge-container {
-		position: relative;
-		display: inline-block;
-	}
-
-	.security-explanation {
-		visibility: hidden;
-		position: absolute;
-		z-index: 10;
-		bottom: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-		background-color: #333;
-		color: white;
-		text-align: center;
-		border-radius: 6px;
-		padding: 5px 10px;
-		margin-bottom: 5px;
-		width: 200px;
-		opacity: 0;
-		transition: opacity 0.3s;
-	}
-
-	.security-badge-container:hover .security-explanation {
-		visibility: visible;
-		opacity: 1;
-	}
-</style>

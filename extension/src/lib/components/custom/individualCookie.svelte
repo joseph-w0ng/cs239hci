@@ -76,7 +76,7 @@
 					<h3 class="text-base font-semibold">{cookie.name}</h3>
 					<div>
 						{#if cookie.secure}
-							<Tooltip.Provider delayDuration={0}>
+							<Tooltip.Provider delayDuration={100}>
 								<Tooltip.Root>
 									<Tooltip.Trigger>
 										<Badge class="text-xs font-normal" variant="outline">🔒 Secure</Badge>
@@ -89,7 +89,7 @@
 							</Tooltip.Provider>
 						{/if}
 						{#if cookie.httpOnly}
-							<Tooltip.Provider delayDuration={0}>
+							<Tooltip.Provider delayDuration={100}>
 								<Tooltip.Root>
 									<Tooltip.Trigger>
 										<Badge class="text-xs font-normal" variant="outline">🔐 HttpOnly</Badge>
@@ -102,7 +102,7 @@
 							</Tooltip.Provider>
 						{/if}
 						{#if cookie.category !== 'essential'}
-							<Tooltip.Provider delayDuration={0}>
+							<Tooltip.Provider delayDuration={100}>
 								<Tooltip.Root>
 									<Tooltip.Trigger>
 										<Badge
@@ -132,8 +132,8 @@
 	<Dialog.Content class="rounded-lg">
 		<Dialog.Header>
 			<Dialog.Title>Raw Cookie Details</Dialog.Title>
-			<Dialog.Description class="flex flex-col gap-2">
-				<div>
+			<Dialog.Description class="flex flex-col items-start gap-2">
+				<div class="w-fill text-left">
 					<div>Domain: {cookie.domain}</div>
 					<div>Path: {cookie.path}</div>
 					<div>

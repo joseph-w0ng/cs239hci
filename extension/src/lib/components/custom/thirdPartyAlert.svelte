@@ -78,7 +78,7 @@
 			<div class="flex items-center justify-between">
 				<div class="flex -space-x-1">
 					{#each uniqueDomains as domain (domain)}
-						<Tooltip.Provider delayDuration={0}>
+						<Tooltip.Provider delayDuration={100}>
 							<Tooltip.Root>
 								<Tooltip.Trigger>
 									<Avatar.Root class="size-5 bg-white" style="outline: 2px white solid">

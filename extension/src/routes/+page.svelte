@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import fake_cookie_data from '$lib/data/cookies.json';
-	import categorizeCookie, { cookieCategories } from '$lib/categorize';
+	import categorizeCookie, { cookieCategories, extractRootDomain } from '$lib/categorize';
 	import Breakdown from '$lib/components/custom/breakdown.svelte';
 	import BulkActionsBar from '$lib/components/custom/bulkActionsBar.svelte';
 	import CookieList from '$lib/components/custom/cookieList.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { page } from '$app/state';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import * as Tooltip from '$lib/components/ui/tooltip/';
 	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import ThirdPartyAlert from '$lib/components/custom/thirdPartyAlert.svelte';
+	import { RotateCw } from 'lucide-svelte';
+	import { extractDomain, getFavicon } from '$lib/utilities';
 
 	let cookies = $state<CookieWithCategory[]>([]);
 	let isChrome = $state(typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id);
@@ -39,15 +41,6 @@
 	function updateBadgeCount(count: number) {
 		if (isChrome) {
 			chrome.action.setBadgeText({ text: count.toString() });
-		}
-	}
-
-	function extractDomain(url: string) {
-		try {
-			const urlObj = new URL(url);
-			return urlObj.hostname;
-		} catch (e) {
-			return 'unknown domain';
 		}
 	}
 
@@ -163,8 +156,7 @@
 		const url = `http${cookie.secure ? 's' : ''}://${cookie.domain}${cookie.path}`;
 
 		try {
-			let cookieToBlock = { name: cookie.name, domain: cookie.domain };
-			console.log(cookieToBlock);
+			let cookieToBlock = { name: cookie.name, domain: cookie.domain, category: cookie.category };
 			await chrome.cookies.remove({
 				url,
 				name: cookie.name,
@@ -251,27 +243,7 @@
 			isLoading = false;
 		}
 
-		getFavicon();
-	}
-
-	function getFavicon() {
-		if (isChrome) {
-			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-				const activeTab = tabs[0];
-
-				if (activeTab.favIconUrl) {
-					activeDomainFavicon = activeTab.favIconUrl;
-				}
-			});
-		} else {
-			const linkElements = document.querySelectorAll(
-				'link[rel="icon"], link[rel="shortcut icon"]'
-			) as NodeListOf<HTMLLinkElement>;
-
-			if (linkElements.length > 0) {
-				activeDomainFavicon = linkElements[0].href;
-			}
-		}
+		activeDomainFavicon = getFavicon(isChrome);
 	}
 
 	// Using Svelte 5's onMount
@@ -284,7 +256,7 @@
 	<div class="flex items-center gap-3">
 		<img class="h-8 w-8" src="/favicon.png" alt="Logo" />
 		<div>
-			<h1 class="text-xl font-bold">Cookie Clear</h1>
+			<h1 class="text-xl font-bold">Cookie Monster</h1>
 			<div class="flex items-center gap-2">
 				<span class="relative flex size-4 pt-[1px]">
 					<span
@@ -301,26 +273,29 @@
 					</span>
 				</span>
 				<p class="text-sm leading-none">
-					<strong>{activeDomain.replace(/^(https?:\/\/)?(www\.)/i, '$1')}</strong>
+					<strong>{extractRootDomain(activeDomain)}</strong>
 				</p>
 			</div>
 		</div>
 	</div>
 
 	<div class="flex gap-2">
-		<Button variant="outline" onclick={refreshCookies} disabled={isLoading}>
-			{#if isLoading}
-				Loading...
-			{:else}
-				↻ Reload
-			{/if}
-		</Button>
+		<Tooltip.Provider delayDuration={100}>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<Button variant="outline" onclick={refreshCookies} disabled={isLoading}>
+						{#if isLoading}
+							Loading...
+						{:else}
+							<RotateCw class="size-2" /> Cookies
+						{/if}
+					</Button>
+				</Tooltip.Trigger>
+				<Tooltip.Content>Reload cookies</Tooltip.Content>
+			</Tooltip.Root>
+		</Tooltip.Provider>
 
-		{#if page.url.pathname !== '/block_list'}
-			<Button href="/block_list">Manage Block List</Button>
-		{:else}
-			<Button href="/">See Breakdown</Button>
-		{/if}
+		<Button href="/block_list">Manage Blocked Cookies</Button>
 	</div>
 </header>
 

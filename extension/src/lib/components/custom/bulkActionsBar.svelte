@@ -25,14 +25,18 @@
 				>
 					<p>{cookieCategory.name} ({categoryCookies.length})</p>
 					{#if cookieCategory.name !== 'Necessary'}
-						<Tooltip.Provider delayDuration={0}>
+						<Tooltip.Provider delayDuration={100}>
 							<Tooltip.Root>
 								<Tooltip.Trigger class="h-4 w-4">
 									<button onclick={() => deleteCookiesByCategory(category)}>
 										<Trash2 class="h-4 w-4" />
 									</button>
 								</Tooltip.Trigger>
-								<Tooltip.Content>Remove and Block</Tooltip.Content>
+								<Tooltip.Content
+									>Remove and Block {categoryCookies.length} Cookie{categoryCookies.length === 1
+										? ''
+										: 's'}</Tooltip.Content
+								>
 							</Tooltip.Root>
 						</Tooltip.Provider>
 					{/if}

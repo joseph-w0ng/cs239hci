@@ -17,6 +17,16 @@ declare global {
 		category: cookieCategory;
 		description: string;
 	}
+
+	interface BlockedCookieInfo {
+		domain: string;
+		name: string;
+		category: cookieCategory;
+	}
+
+	interface BlockList {
+		[key: string]: BlockedCookieInfo[];
+	}
 }
 
 export { };

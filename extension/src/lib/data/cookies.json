@@ -13,7 +13,7 @@
 		"value": "IZzGZfOdpJM5QosqlzqCPIzR"
 	},
 	{
-		"domain": ".instagram.com",
+		"domain": ".facebook.com",
 		"expirationDate": 1742074918.09181,
 		"hostOnly": false,
 		"httpOnly": true,
@@ -26,7 +26,7 @@
 		"value": "IZzGZfOdpJM5QosqlzqCPIzR"
 	},
 	{
-		"domain": ".instagram.com",
+		"domain": ".pinterest.com",
 		"expirationDate": 1744692375.962089,
 		"hostOnly": false,
 		"httpOnly": true,
@@ -39,7 +39,7 @@
 		"value": "Ze6MlwAEAAEIb-IgqxAoaPYXPLpr"
 	},
 	{
-		"domain": ".instagram.com",
+		"domain": ".reddit.com",
 		"expirationDate": 1748054133.178488,
 		"hostOnly": false,
 		"httpOnly": true,
@@ -52,7 +52,7 @@
 		"value": "1"
 	},
 	{
-		"domain": ".instagram.com",
+		"domain": ".google.com",
 		"expirationDate": 1748054133.178571,
 		"hostOnly": false,
 		"httpOnly": true,
@@ -78,11 +78,11 @@
 		"value": "%7B%2217845091156472999%22%3A%7B%22c%22%3A%7B%221%22%3A%22HCwAABbU3QEW8o_jpgkTBRbO0u31gYGzPwA%22%2C%222%22%3A%22GRwVQBwcGAAYABUEAAAWARYAFgAWAAAWKAA%22%7D%2C%22d%22%3A%22c5cc4511-358a-4250-af68-10335a6d647d%22%2C%22s%22%3A%220%22%2C%22u%22%3A%228jqpa0%22%7D%7D"
 	},
 	{
-		"domain": ".instagram.com",
+		"domain": ".example.com",
 		"expirationDate": 1748670888.132315,
 		"hostOnly": false,
 		"httpOnly": false,
-		"name": "ds_user_id",
+		"name": "mbox",
 		"path": "/",
 		"sameSite": "unspecified",
 		"secure": true,
@@ -142,7 +142,7 @@
 		"value": "\"NHA\\05444309784998\\0541772430887:01f714c8faa40137ec255099169dba5ea6fa4c76cc85e248ca4706f2690bc4c6ccac7383\""
 	},
 	{
-		"domain": ".instagram.com",
+		"domain": ".example.com",
 		"expirationDate": 1772430888.13236,
 		"hostOnly": false,
 		"httpOnly": true,

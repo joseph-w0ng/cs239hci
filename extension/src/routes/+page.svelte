@@ -10,8 +10,8 @@
 	import * as Avatar from '$lib/components/ui/avatar';
 	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import ThirdPartyAlert from '$lib/components/custom/thirdPartyAlert.svelte';
 
-	// Use $state for reactive variables in Svelte 5
 	let cookies = $state<CookieWithCategory[]>([]);
 	let isChrome = $state(typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id);
 	let activeDomain = $state('');
@@ -22,7 +22,6 @@
 	let isLoading = $state(true);
 	let resource_list = $state([]);
 
-	// Derived state using $derived
 	let groupedCookies: Record<string, CookieWithCategory[]> = $derived(
 		groupCookiesByCategory(cookies)
 	);
@@ -84,7 +83,6 @@
 
 		try {
 			const resourceUrls = await getResourceUrls(tabId);
-			resource_list = resourceUrls;
 
 			const origins = resourceUrls
 				?.map((url: string) => {
@@ -326,7 +324,10 @@
 	</div>
 </header>
 
+<ThirdPartyAlert {activeDomain} {groupedCookies} {deleteSelectedCookies} />
+
 <Breakdown {cookies} {groupedCookies} />
+
 {#if isLoading}
 	<Separator />
 	<div class="flex flex-col gap-4">

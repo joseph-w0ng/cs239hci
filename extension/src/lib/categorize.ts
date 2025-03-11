@@ -631,44 +631,44 @@ export function getDescriptionForCookie(name: string, category: cookieCategory, 
     if (domain) {
         // Check for well-known domains and give more specific descriptions
         if (domain.includes('facebook')) {
-            return `Facebook ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `Facebook ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('google') || domain.includes('doubleclick')) {
-            return `Google ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `Google ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('twitter')) {
-            return `Twitter ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `Twitter ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('linkedin')) {
-            return `LinkedIn ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `LinkedIn ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('pinterest')) {
-            return `Pinterest ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `Pinterest ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('tiktok')) {
-            return `TikTok ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `TikTok ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('reddit')) {
-            return `Reddit ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `Reddit ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('adobe') || domain.includes('omtrdc') || domain.includes('demdex')) {
-            return `Adobe ${getCategoryPurpose(category)} cookie from ${domain}`;
+            return `Adobe ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('criteo')) {
-            return `Criteo advertising cookie from ${domain}`;
+            return `Criteo advertising cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('hotjar')) {
-            return `Hotjar analytics cookie from ${domain}`;
+            return `Hotjar analytics cookie from ${extractRootDomain(domain)}`;
         }
         if (domain.includes('clarity')) {
-            return `Microsoft Clarity analytics cookie from ${domain}`;
+            return `Microsoft Clarity analytics cookie from ${extractRootDomain(domain)}`;
         }
 
         const currentDomain = extractRootDomain(activeDomain);
         const cookieDomain = extractRootDomain(domain);
 
         if (currentDomain !== cookieDomain) {
-            return `Third-party ${getCategoryPurpose(category)} cookie from ${domain} (Debugging: ${currentDomain} - ${activeDomain}, ${cookieDomain} - ${domain})`;
+            return `Third-party ${getCategoryPurpose(category)} cookie from ${extractRootDomain(domain)}`;
         }
     }
 
@@ -685,7 +685,7 @@ export function getDescriptionForCookie(name: string, category: cookieCategory, 
 }
 
 // Helper function to extract the root domain from a hostname
-function extractRootDomain(hostname: string): string {
+export function extractRootDomain(hostname: string): string {
     // Handle IP addresses
     if (/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
         return hostname;

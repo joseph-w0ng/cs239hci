@@ -1,0 +1,15 @@
+{
+	"edikted.com": [{ "domain": ".edikted.com", "name": "GlobalE_Consent" }],
+	"mail.google.com": [{ "domain": ".google.com", "name": "OGPC" }],
+	"stackoverflow.com": [{ "domain": ".google.com", "name": "NID" }],
+	"us.shein.com": [
+		{ "domain": ".shein.com", "name": "_fbp" },
+		{ "domain": ".shein.com", "name": "_uetsid" },
+		{ "domain": ".shein.com", "name": "_uetvid" },
+		{ "domain": ".shein.com", "name": "_rdt_uuid" },
+		{ "domain": ".us.shein.com", "name": "_pin_unauth" },
+		{ "domain": "us.shein.com", "name": "g_state" },
+		{ "domain": "us.shein.com", "name": "cookieId" },
+		{ "domain": "us.shein.com", "name": "privacy-sdk-cookie-id" }
+	]
+}

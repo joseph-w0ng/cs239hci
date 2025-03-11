@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"manifest_version": 3,
 	"action": {
-	  "default_title": "View Active Cookies",
+		"default_title": "View Active Cookies",
 		"default_icon": "favicon.png",
 		"default_popup": "index.html"
 	},
@@ -12,14 +12,6 @@
 		"service_worker": "service_worker.js",
 		"type": "module"
 	},
-	"permissions": [
-		"cookies",
-		"storage",
-		"activeTab",
-		"storage"
-	  ],
-	"host_permissions": [
-		"<all_urls>"
-	  ]
+	"permissions": ["cookies", "storage", "scripting", "activeTab", "storage"],
+	"host_permissions": ["<all_urls>"]
 }
-

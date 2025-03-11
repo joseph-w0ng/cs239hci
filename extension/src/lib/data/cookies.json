@@ -14,6 +14,19 @@
 	},
 	{
 		"domain": ".instagram.com",
+		"expirationDate": 1742074918.09181,
+		"hostOnly": false,
+		"httpOnly": true,
+		"name": "ooga booga",
+		"path": "/",
+		"sameSite": "no_restriction",
+		"secure": true,
+		"session": false,
+		"storeId": "0",
+		"value": "IZzGZfOdpJM5QosqlzqCPIzR"
+	},
+	{
+		"domain": ".instagram.com",
 		"expirationDate": 1744692375.962089,
 		"hostOnly": false,
 		"httpOnly": true,

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
+	import { onMount } from 'svelte';
 	import fake_cookie_data from '$lib/data/cookies.json';
 	import categorizeCookie, { cookieCategories } from '$lib/categorize';
 	import Breakdown from '$lib/components/custom/breakdown.svelte';
@@ -8,19 +8,24 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { page } from '$app/state';
 	import * as Avatar from '$lib/components/ui/avatar';
+	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
+	import Separator from '$lib/components/ui/separator/separator.svelte';
 
-	let cookies: CookieWithCategory[] = [];
-	let groupedCookies: Record<string, CookieWithCategory[]> = {};
-	let isChrome = typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id;
-	let activeDomain = '';
-	let selectedCategory: string | null = null;
-	let showRawData = false;
-	let deleteStatus: { [key: string]: string } = {};
-	let bulkActionMode = false;
-	let selectedCookies: Set<string> = new Set();
-	let cookiesDeleted = 0;
-	let isDeleting = false;
-	let activeDomainFavicon = '';
+	// Use $state for reactive variables in Svelte 5
+	let cookies = $state<CookieWithCategory[]>([]);
+	let isChrome = $state(typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id);
+	let activeDomain = $state('');
+	let deleteStatus = $state<{ [key: string]: string }>({});
+	let cookiesDeleted = $state(0);
+	let isDeleting = $state(false);
+	let activeDomainFavicon = $state('');
+	let isLoading = $state(true);
+	let resource_list = $state([]);
+
+	// Derived state using $derived
+	let groupedCookies: Record<string, CookieWithCategory[]> = $derived(
+		groupCookiesByCategory(cookies)
+	);
 
 	function groupCookiesByCategory(cookieList: CookieWithCategory[]) {
 		const grouped: Record<string, CookieWithCategory[]> = {};
@@ -33,7 +38,9 @@
 	}
 
 	function updateBadgeCount(count: number) {
-		chrome.action.setBadgeText({ text: count.toString() });
+		if (isChrome) {
+			chrome.action.setBadgeText({ text: count.toString() });
+		}
 	}
 
 	function extractDomain(url: string) {
@@ -45,24 +52,106 @@
 		}
 	}
 
-	function getCookieStats() {
-		const total = cookies.length;
-		const stats = {
-			total,
-			categories: Object.keys(groupedCookies).map((category) => ({
-				name: cookieCategories[category as cookieCategory].name,
-				count: groupedCookies[category].length,
-				percentage: Math.round((groupedCookies[category].length / total) * 100) || 0
-			}))
-		};
-		return stats;
+	// Function to get performance entries (resource URLs) from the current tab
+	async function getResourceUrls(tabId: number) {
+		function getPerformanceEntries() {
+			return performance.getEntriesByType('resource').map((r) => r.name);
+		}
+
+		try {
+			const results = await chrome.scripting.executeScript({
+				target: { tabId },
+				func: getPerformanceEntries
+			});
+
+			return results[0].result;
+		} catch (error) {
+			console.error('Error getting performance entries:', error);
+			return [];
+		}
+	}
+
+	// Function to get all cookies from all resources
+	async function getAllResourceCookies(tabId: number) {
+		if (!isChrome) {
+			cookies = (fake_cookie_data as chrome.cookies.Cookie[]).map((cookie) =>
+				categorizeCookie(cookie, activeDomain)
+			);
+			activeDomain = 'www.example.com';
+			isLoading = false;
+			return;
+		}
+
+		try {
+			const resourceUrls = await getResourceUrls(tabId);
+			resource_list = resourceUrls;
+
+			const origins = resourceUrls
+				?.map((url: string) => {
+					try {
+						return new URL(url).origin;
+					} catch (e) {
+						return null;
+					}
+				})
+				.filter((url: string | null) => Boolean(url) && url !== 'null');
+
+			const uniqueOrigins = new Set(origins);
+
+			if (activeDomain) {
+				uniqueOrigins.add(`http://${activeDomain}`);
+				uniqueOrigins.add(`https://${activeDomain}`);
+			}
+
+			const getCookiesPromises = [];
+
+			for (const url of uniqueOrigins) {
+				if (url) {
+					const promise = chrome.cookies.getAll({ url }).then((cookies) => ({
+						url,
+						cookies
+					}));
+
+					getCookiesPromises.push(promise);
+				}
+			}
+
+			const urlCookies = await Promise.all(getCookiesPromises);
+
+			const filtered = urlCookies.filter((c) => c.cookies.length);
+
+			const allCookies = [];
+			const cookieNames = new Set();
+
+			for (const { cookies: originCookies } of filtered) {
+				for (const cookie of originCookies) {
+					const cookieKey = `${cookie.domain}|${cookie.name}|${cookie.path}`;
+					if (!cookieNames.has(cookieKey)) {
+						cookieNames.add(cookieKey);
+						allCookies.push(cookie);
+					}
+				}
+			}
+
+			updateBadgeCount(allCookies.length);
+
+			cookies = allCookies.map((cookie) => categorizeCookie(cookie, activeDomain));
+
+			console.log('Found cookies from all resources:', allCookies.length);
+
+			isLoading = false;
+		} catch (error) {
+			console.error('Error getting all resource cookies:', error);
+			isLoading = false;
+		}
 	}
 
 	async function deleteCookie(cookie: CookieWithCategory) {
 		if (!isChrome) {
 			// For development environment, simulate deletion
-			cookies = cookies.filter((c) => c.name !== cookie.name);
-			groupedCookies = groupCookiesByCategory(cookies);
+			cookies = cookies.filter(
+				(c) => c.name !== cookie.name || c.domain !== cookie.domain || c.path !== cookie.path
+			);
 			deleteStatus[cookie.name] = 'Deleted (simulated)';
 			setTimeout(() => {
 				delete deleteStatus[cookie.name];
@@ -85,39 +174,32 @@
 			});
 
 			deleteStatus[cookie.name] = 'Deleted';
-			cookies = cookies.filter((c) => c.name !== cookie.name);
-			groupedCookies = groupCookiesByCategory(cookies);
+
+			// Create a new array to ensure reactivity
+			cookies = cookies.filter(
+				(c) => c.name !== cookie.name || c.domain !== cookie.domain || c.path !== cookie.path
+			);
+
 			cookiesDeleted++;
 
 			setTimeout(() => {
 				delete deleteStatus[cookie.name];
 			}, 3000);
 
+			chrome.storage.local.get(['siteData'], function (result) {
+				let siteData = result.siteData || {};
 
-			if (isChrome) {
-				chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-					if (!tabs.length) return;
-					const url = tabs[0].url;
-					if (!url) return;
-
-					activeDomain = extractDomain(url);
-				});
-			}
-
-			chrome.storage.local.get(['siteData'], function(result) {
-				let siteData = result.siteData;
-
-				if (!Array.isArray(siteData[activeDomain])) {
-        			siteData[activeDomain] = [];
-    			}
+				if (!siteData[activeDomain]) {
+					siteData[activeDomain] = [];
+				}
 
 				siteData[activeDomain].push(cookieToBlock);
-				console.log("Updated siteData:" + siteData)
-				
+				console.log('Updated siteData:', siteData);
+
 				chrome.storage.local.set({ siteData: siteData });
 			});
-			
-			chrome.runtime.sendMessage({ action: 'blockCookies', activeDomain});
+
+			chrome.runtime.sendMessage({ action: 'blockCookies', activeDomain });
 		} catch (e) {
 			deleteStatus[cookie.name] = 'Error: Could not delete';
 			console.error('Error deleting cookie:', e);
@@ -142,64 +224,36 @@
 		isDeleting = false;
 	}
 
-	async function deleteSelectedCookies() {
+	async function deleteSelectedCookies(selectedCookies: CookieWithCategory[]) {
 		isDeleting = true;
-		for (const cookieName of selectedCookies) {
-			const cookie = cookies.find((c) => c.name === cookieName);
-			if (cookie) {
-				await deleteCookie(cookie);
-			}
+		for (const cookie of selectedCookies) {
+			await deleteCookie(cookie);
 		}
-		cookies = cookies;
-		await tick();
-		selectedCookies.clear();
-		bulkActionMode = false;
 		isDeleting = false;
 	}
 
-	function toggleCookieSelection(cookieName: string) {
-		if (selectedCookies.has(cookieName)) {
-			selectedCookies.delete(cookieName);
-		} else {
-			selectedCookies.add(cookieName);
-		}
-		selectedCookies = selectedCookies; // Trigger reactivity
-	}
-
-	onMount(() => {
+	async function refreshCookies() {
+		isLoading = true;
 		if (isChrome) {
-			chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+			chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
 				if (!tabs.length) return;
-				const url = tabs[0].url;
+				const tab = tabs[0];
+				const url = tab.url;
 				if (!url) return;
 
 				activeDomain = extractDomain(url);
-
-				chrome.cookies.getAll({ url }, (cookieArray) => {
-					updateBadgeCount(cookieArray.length);
-					cookies = cookieArray.map(categorizeCookie);
-					groupedCookies = groupCookiesByCategory(cookies);
-				});
+				await getAllResourceCookies(tab.id || 0);
 			});
 		} else {
 			// For development: Use fake data
-			cookies = (fake_cookie_data as chrome.cookies.Cookie[]).map(categorizeCookie);
+			cookies = (fake_cookie_data as chrome.cookies.Cookie[]).map((cookie) =>
+				categorizeCookie(cookie, activeDomain)
+			);
 			activeDomain = 'www.example.com';
-			groupedCookies = groupCookiesByCategory(cookies);
+			isLoading = false;
 		}
 
 		getFavicon();
-	});
-
-	function selectCategory(category: string) {
-		selectedCategory = selectedCategory === category ? null : category;
-	}
-
-	// Get cookies that can be deleted (non-essential)
-	function getDeletableCookies() {
-		return cookies.filter(
-			(cookie) => cookieCategories[cookie.category as cookieCategory].canDelete
-		);
 	}
 
 	function getFavicon() {
@@ -221,6 +275,11 @@
 			}
 		}
 	}
+
+	// Using Svelte 5's onMount
+	onMount(() => {
+		refreshCookies();
+	});
 </script>
 
 <header class="mb-4 flex items-center justify-between">
@@ -251,7 +310,13 @@
 	</div>
 
 	<div class="flex gap-2">
-		<Button variant="outline">↻ Reload</Button>
+		<Button variant="outline" onclick={refreshCookies} disabled={isLoading}>
+			{#if isLoading}
+				Loading...
+			{:else}
+				↻ Reload
+			{/if}
+		</Button>
 
 		{#if page.url.pathname !== '/block_list'}
 			<Button href="/block_list">Manage Block List</Button>
@@ -262,7 +327,22 @@
 </header>
 
 <Breakdown {cookies} {groupedCookies} />
+{#if isLoading}
+	<Separator />
+	<div class="flex flex-col gap-4">
+		{#each Array(3) as _}
+			<Skeleton class="h-12 w-full rounded-lg" />
+			<Separator />
+		{/each}
+	</div>
+{:else}
+	<BulkActionsBar {cookies} {groupedCookies} {deleteCookiesByCategory} />
 
-<BulkActionsBar {cookies} {groupedCookies} {deleteCookiesByCategory} />
+	<CookieList {cookies} {groupedCookies} {deleteCookie} {deleteSelectedCookies} />
+{/if}
 
-<CookieList {deleteSelectedCookies} {cookies} {groupedCookies} {deleteCookie} />
+{#each resource_list as resource}
+	<div>
+		{resource}
+	</div>
+{/each}

@@ -40,8 +40,7 @@ export const cookieCategories: Record<
     }
 };
 
-// Enhanced cookie categorization function
-export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieWithCategory {
+export default function categorizeCookie(cookie: chrome.cookies.Cookie, activeDomain: string): CookieWithCategory {
     const name = cookie.name.toLowerCase();
     const domain = cookie.domain.toLowerCase();
     const path = cookie.path.toLowerCase();
@@ -150,9 +149,56 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
                 'clarity',
                 'plausible',
                 'fathom',
-                '_ga'
+                '_ga',
+                'adobemc',
+                'adobe_mc',
+                'omtrdc',
+                'mbox',
+                'sc_',
+                's_',
+                'amplitude',
+                'mixpanel',
+                'kissmetrics',
+                'heap',
+                'segment',
+                'hubspot',
+                'intercom',
+                'ap_',
+                'at_'
             ],
-            domains: ['analytics.', 'stats.', 'metrics.', 'logging.', 'monitor.', 'telemetry.'],
+            domains: [
+                'analytics.',
+                'stats.',
+                'metrics.',
+                'logging.',
+                'monitor.',
+                'telemetry.',
+                'google-analytics.com',
+                'googletagmanager.com',
+                'hotjar.com',
+                'clarity.ms',
+                'plausible.io',
+                'fathom.com',
+                'amplitude.com',
+                'mixpanel.com',
+                'kissmetrics.com',
+                'heapanalytics.com',
+                'segment.com',
+                'segment.io',
+                'adobe.com',
+                'adobedtm.com',
+                'omtrdc.net',
+                'hubspot.com',
+                'intercom.io',
+                'quantserve.com',
+                'newrelic.com',
+                'dynatrace.com',
+                'matomo.cloud',
+                'chartbeat.com',
+                'parsely.com',
+                'alexametrics.com',
+                'crazyegg.com'
+            ],
             common: [
                 'google_analytics',
                 'ga_session',
@@ -167,7 +213,9 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
                 'mp_',
                 'amplitude_',
                 'mixpanel_',
-                'matomo_'
+                'matomo_',
+                'adobe_mc',
+                'sc.ASP.NET_'
             ]
         },
         marketing: {
@@ -195,13 +243,29 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
                 'pinterest',
                 'twitter',
                 'linked',
-                'tiktok'
+                'tiktok',
+                'bing',
+                'yahoo',
+                'amazon-adsystem',
+                'adroll',
+                'adnxs',
+                'mediamath',
+                'pubmatic',
+                'rubiconproject',
+                'openx',
+                'tradedesk',
+                'msn',
+                'verizon',
+                'liveramp',
+                'snapchat',
+                'reddit'
             ],
             domains: [
                 'ads.',
                 'ad.',
                 'adserv',
                 'doubleclick.',
+                'doubleverify.',
                 'facebook.',
                 'fbcdn.',
                 'twitter.',
@@ -213,7 +277,51 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
                 'adnxs.',
                 'criteo.',
                 'taboola.',
-                'outbrain.'
+                'outbrain.',
+                'instagram.',
+                'reddit.',
+                'adroll.com',
+                'demdex.net',
+                'bluekai.com',
+                'rubiconproject.com',
+                'casalemedia.com',
+                'pubmatic.com',
+                'openx.net',
+                'smartadserver.com',
+                'advertising.com',
+                'bidswitch.net',
+                'media.net',
+                'yahoo.com',
+                'bing.com',
+                'msn.com',
+                'linkedin.com',
+                'pinterest.com',
+                'snapchat.com',
+                'facebook.net',
+                'tiktok.com',
+                'adsrvr.org',
+                'sharethis.com',
+                'addthis.com',
+                'spotxchange.com',
+                'innovid.com',
+                'moatads.com',
+                'serving-sys.com',
+                'sizmek.com',
+                'turn.com',
+                'eyeota.com',
+                'exelator.com',
+                'crwdcntrl.net',
+                'liveramp.com',
+                'ipredictive.com',
+                'rlcdn.com',
+                'quantcast.com',
+                'dotomi.com',
+                'amgdgt.com',
+                'glam.com',
+                'admantx.com',
+                'contextweb.com',
+                'adform.net',
+                'cloudfront.net'
             ],
             common: [
                 '_fbp',
@@ -230,10 +338,80 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
                 'IDE',
                 'NID',
                 'DSID',
-                '_gcl_'
+                '_gcl_',
+                '_kuid_',
+                '_lc2_',
+                '_rdt_',
+                'ATN',
+                'PREF',
+                'SID',
+                'TAID',
+                'test_cookie',
+                'tuuid',
+                'uid',
+                'UIDR',
+                'UserMatchHistory',
+                'obuid',
+                '__gads',
+                '__qca',
+                'TapAd_',
+                '_pinterest_',
+                '_twitter_',
+                '_li_'
             ]
         }
     };
+
+    // Common third-party domain categorization
+    // These are domains that should always be categorized a certain way
+    const domainCategories = [
+        // Social media platforms (typically marketing)
+        { domain: 'facebook.com', category: 'marketing' },
+        { domain: 'facebook.net', category: 'marketing' },
+        { domain: 'fbcdn.net', category: 'marketing' },
+        { domain: 'instagram.com', category: 'marketing' },
+        { domain: 'twitter.com', category: 'marketing' },
+        { domain: 'linkedin.com', category: 'marketing' },
+        { domain: 'pinterest.com', category: 'marketing' },
+        { domain: 'reddit.com', category: 'marketing' },
+        { domain: 'tiktok.com', category: 'marketing' },
+        { domain: 'snapchat.com', category: 'marketing' },
+
+        // Google advertising domains
+        { domain: 'doubleclick.net', category: 'marketing' },
+        { domain: 'googlesyndication.com', category: 'marketing' },
+        { domain: 'googleadservices.com', category: 'marketing' },
+
+        // Google analytics domains
+        { domain: 'google-analytics.com', category: 'analytics' },
+        { domain: 'googletagmanager.com', category: 'analytics' },
+
+        // Adobe domains
+        { domain: 'omtrdc.net', category: 'analytics' },
+        { domain: 'demdex.net', category: 'marketing' },
+        { domain: 'adobedtm.com', category: 'analytics' },
+
+        // Major ad networks
+        { domain: 'criteo.com', category: 'marketing' },
+        { domain: 'criteo.net', category: 'marketing' },
+        { domain: 'taboola.com', category: 'marketing' },
+        { domain: 'outbrain.com', category: 'marketing' },
+        { domain: 'adnxs.com', category: 'marketing' },
+        { domain: 'rubiconproject.com', category: 'marketing' },
+        { domain: 'openx.net', category: 'marketing' },
+        { domain: 'pubmatic.com', category: 'marketing' },
+
+        // Analytics services
+        { domain: 'hotjar.com', category: 'analytics' },
+        { domain: 'amplitude.com', category: 'analytics' },
+        { domain: 'mixpanel.com', category: 'analytics' },
+        { domain: 'segment.com', category: 'analytics' },
+        { domain: 'segment.io', category: 'analytics' },
+        { domain: 'clarity.ms', category: 'analytics' },
+        { domain: 'quantserve.com', category: 'analytics' },
+        { domain: 'matomo.cloud', category: 'analytics' },
+        { domain: 'newrelic.com', category: 'analytics' }
+    ];
 
     // Known cookie services - exact matching
     const knownCookies: Record<string, string> = {
@@ -272,15 +450,57 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
         _pin_unauth: 'marketing', // Pinterest
         _routing_id: 'essential', // Generic routing
         AWSALB: 'essential', // AWS load balancer
-        JSESSIONID: 'essential' // Java session
+        JSESSIONID: 'essential', // Java session
+
+        // Adobe cookies
+        AMCV_: 'analytics', // Adobe Marketing Cloud
+        AMCVS_: 'analytics', // Adobe Marketing Cloud session
+        s_cc: 'analytics', // Adobe Analytics cookie consent
+        s_sq: 'analytics', // Adobe Analytics previous page
+        s_vi: 'analytics', // Adobe Analytics visitor ID
+        s_fid: 'analytics', // Adobe Analytics fallback visitor ID
+        mbox: 'marketing', // Adobe Target
+
+        // More marketing/advertising cookies
+        __gads: 'marketing', // Google Advertising
+        __gac: 'marketing', // Google Ads Conversion
+        _gac_: 'marketing', // Google Ads Conversion
+        _gcl_aw: 'marketing', // Google Ads Conversion Linker
+        _fbc: 'marketing', // Facebook Click ID
+        _pinterest_ct: 'marketing', // Pinterest conversion tracking
+        _pinterest_sess: 'marketing', // Pinterest session
+        _rdt_uuid: 'marketing', // Reddit
+
+        // More analytics cookies
+        _pk_id: 'analytics', // Matomo/Piwik
+        _pk_ses: 'analytics', // Matomo/Piwik session
+        amp_: 'analytics', // Amplitude
+        mp_: 'analytics', // Mixpanel
+        ajs_user_id: 'analytics', // Segment
+        ajs_anonymous_id: 'analytics', // Segment
+        _ym_uid: 'analytics', // Yandex Metrica
+        _ym_d: 'analytics', // Yandex Metrica
+        __hstc: 'analytics', // HubSpot
+        __hssc: 'analytics', // HubSpot session
+        __hsfp: 'analytics', // HubSpot
+        'intercom-id': 'analytics', // Intercom
+        'intercom-session': 'analytics' // Intercom session
     };
 
-    // First check for exact matches in known cookies
+    // First check if the domain is in our known domain categories list
+    for (const domainCategory of domainCategories) {
+        if (domain.includes(domainCategory.domain)) {
+            // Add a high score to make sure this domain categorization is prioritized
+            scores[domainCategory.category as keyof typeof scores] += 10;
+        }
+    }
+
+    // Check for exact matches in known cookies
     if (knownCookies[name]) {
         return {
             ...cookie,
             category: knownCookies[name] as cookieCategory,
-            description: getDescriptionForCookie(name, knownCookies[name] as cookieCategory)
+            description: getDescriptionForCookie(name, knownCookies[name] as cookieCategory, activeDomain)
         };
     }
 
@@ -298,7 +518,7 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
         // Check domain patterns
         catPatterns.domains.forEach((pattern) => {
             if (domain.includes(pattern)) {
-                scores[category as keyof typeof scores] += 2;
+                scores[category as keyof typeof scores] += 5; // Increased weight for domain matches
             }
         });
 
@@ -326,6 +546,22 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
         scores.analytics += 1;
     }
 
+    // Special case: Social media domains detected in the cookie domain
+    const socialMediaDomains = ['facebook', 'twitter', 'linkedin', 'instagram', 'pinterest', 'tiktok', 'snapchat', 'reddit'];
+    for (const social of socialMediaDomains) {
+        if (domain.includes(social)) {
+            scores.marketing += 3;
+        }
+    }
+
+    // Special case: Common ad tech subdomains
+    const adTechSubdomains = ['ads', 'adserver', 'adservice', 'pixel', 'track', 'tracker', 'targeting', 'retargeting'];
+    for (const subDomain of adTechSubdomains) {
+        if (domain.includes(subDomain)) {
+            scores.marketing += 3;
+        }
+    }
+
     // Determine the category with the highest score
     let highestCategory: keyof typeof scores = 'essential';
     let highestScore = 0;
@@ -349,12 +585,12 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie): CookieW
     return {
         ...cookie,
         category: highestCategory,
-        description: getDescriptionForCookie(name, highestCategory)
+        description: getDescriptionForCookie(name, highestCategory, activeDomain, domain)
     };
 }
 
-// Get a more specific description based on the cookie name and category
-export function getDescriptionForCookie(name: string, category: cookieCategory): string {
+// Get a more specific description based on the cookie name, category, and domain
+export function getDescriptionForCookie(name: string, category: cookieCategory, activeDomain: string, domain?: string): string {
     // Well-known cookies with specific descriptions
     const specificDescriptions: Record<string, string> = {
         _ga: 'Google Analytics cookie that distinguishes users',
@@ -371,12 +607,69 @@ export function getDescriptionForCookie(name: string, category: cookieCategory):
         datr: 'Facebook security cookie to identify the browser',
         csrftoken: 'Helps prevent Cross-Site Request Forgery attacks',
         AWSALB: 'Amazon Web Services load balancer cookie',
-        MUID: 'Microsoft User Identifier for advertising'
+        MUID: 'Microsoft User Identifier for advertising',
+        IDE: 'Doubleclick cookie used for targeted advertising',
+        __gads: 'Google advertising cookie used to measure interactions',
+        AMCV_: 'Adobe Marketing Cloud visitor identification cookie',
+        s_vi: 'Adobe Analytics visitor identification cookie',
+        mbox: 'Adobe Target cookie for personalization',
+        _pin_unauth: 'Pinterest cookie for guest user identification',
+        _rdt_uuid: 'Reddit cookie for tracking and advertising',
+        _uetsid: 'Microsoft Advertising (Bing) session tracking',
+        mp_: 'Mixpanel analytics cookie that tracks user behavior',
+        ajs_user_id: 'Segment analytics cookie that identifies users',
+        __hstc: 'HubSpot analytics cookie tracking visitors',
+        'intercom-id': 'Intercom cookie for visitor identification'
     };
 
     // Return specific description if we have one
     if (specificDescriptions[name]) {
         return specificDescriptions[name];
+    }
+
+    // Create domain-specific description
+    if (domain) {
+        // Check for well-known domains and give more specific descriptions
+        if (domain.includes('facebook')) {
+            return `Facebook ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('google') || domain.includes('doubleclick')) {
+            return `Google ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('twitter')) {
+            return `Twitter ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('linkedin')) {
+            return `LinkedIn ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('pinterest')) {
+            return `Pinterest ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('tiktok')) {
+            return `TikTok ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('reddit')) {
+            return `Reddit ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('adobe') || domain.includes('omtrdc') || domain.includes('demdex')) {
+            return `Adobe ${getCategoryPurpose(category)} cookie from ${domain}`;
+        }
+        if (domain.includes('criteo')) {
+            return `Criteo advertising cookie from ${domain}`;
+        }
+        if (domain.includes('hotjar')) {
+            return `Hotjar analytics cookie from ${domain}`;
+        }
+        if (domain.includes('clarity')) {
+            return `Microsoft Clarity analytics cookie from ${domain}`;
+        }
+
+        const currentDomain = extractRootDomain(activeDomain);
+        const cookieDomain = extractRootDomain(domain);
+
+        if (currentDomain !== cookieDomain) {
+            return `Third-party ${getCategoryPurpose(category)} cookie from ${domain} (Debugging: ${currentDomain} - ${activeDomain}, ${cookieDomain} - ${domain})`;
+        }
     }
 
     // Generic description based on category
@@ -389,4 +682,54 @@ export function getDescriptionForCookie(name: string, category: cookieCategory):
     };
 
     return categoryDescriptions[category];
+}
+
+// Helper function to extract the root domain from a hostname
+function extractRootDomain(hostname: string): string {
+    // Handle IP addresses
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
+        return hostname;
+    }
+
+    // Remove any leading dots
+    hostname = hostname.replace(/^\./, '');
+
+    // Split the hostname by dots
+    const parts = hostname.split('.');
+
+    // Check if it's a simple domain (e.g., 'example.com')
+    if (parts.length <= 2) {
+        return hostname;
+    }
+
+    // Handle special TLDs like .co.uk, .com.au, etc.
+    const specialTLDs = [
+        'co.uk', 'com.au', 'com.br', 'co.jp', 'co.nz', 'co.za',
+        'com.sg', 'com.hk', 'org.uk', 'net.au', 'org.au', 'ac.uk'
+    ];
+
+    const lastTwoParts = parts.slice(-2).join('.');
+    if (specialTLDs.includes(lastTwoParts)) {
+        // If it's a special TLD, get the last three parts
+        return parts.slice(-3).join('.');
+    }
+
+    // Otherwise, get the last two parts
+    return parts.slice(-2).join('.');
+}
+
+// Helper to get a purpose description based on category
+function getCategoryPurpose(category: cookieCategory): string {
+    switch (category) {
+        case 'essential':
+            return 'essential';
+        case 'functional':
+            return 'preference';
+        case 'analytics':
+            return 'analytics';
+        case 'marketing':
+            return 'advertising';
+        default:
+            return '';
+    }
 }

@@ -1,3 +1,5 @@
+let isLoading = false;
+
 function extractDomain(url) {
   try {
     const urlObj = new URL(url);
@@ -7,19 +9,102 @@ function extractDomain(url) {
   }
 }
 
+async function getResourceUrls(tabId) {
+  function getPerformanceEntries() {
+    return performance.getEntriesByType('resource').map((r) => r.name);
+  }
+
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: getPerformanceEntries
+    });
+
+    return results[0].result;
+  } catch (error) {
+    console.error('Error getting performance entries:', error);
+    return [];
+  }
+}
+
+// Function to get all cookies from all resources
+async function getAllResourceCookies(tabId) {
+
+  try {
+    const resourceUrls = await getResourceUrls(tabId);
+
+    const origins = resourceUrls
+      ?.map((url) => {
+        try {
+          return new URL(url).origin;
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter((url) => Boolean(url) && url !== 'null');
+
+    const uniqueOrigins = new Set(origins);
+
+    if (activeDomain) {
+      uniqueOrigins.add(`http://${activeDomain}`);
+      uniqueOrigins.add(`https://${activeDomain}`);
+    }
+
+    const getCookiesPromises = [];
+
+    for (const url of uniqueOrigins) {
+      if (url) {
+        const promise = chrome.cookies.getAll({ url }).then((cookies) => ({
+          url,
+          cookies
+        }));
+
+        getCookiesPromises.push(promise);
+      }
+    }
+
+    const urlCookies = await Promise.all(getCookiesPromises);
+
+    const filtered = urlCookies.filter((c) => c.cookies.length);
+
+    const allCookies = [];
+    const cookieNames = new Set();
+
+    for (const { cookies: originCookies } of filtered) {
+      for (const cookie of originCookies) {
+        const cookieKey = `${cookie.domain}|${cookie.name}|${cookie.path}`;
+        if (!cookieNames.has(cookieKey)) {
+          cookieNames.add(cookieKey);
+          allCookies.push(cookie);
+        }
+      }
+    }
+
+    let size = allCookies.length.toString();
+    chrome.action.setBadgeText({ text: size });
+
+    console.log('Found cookies from all resources:', allCookies.length);
+
+    isLoading = false;
+  } catch (error) {
+    console.error('Error getting all resource cookies:', error);
+    isLoading = false;
+  }
+}
+
 let activeDomain = '';
 
 chrome.cookies.onChanged.addListener(changeInfo => {
     // Get the active tab's URL
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTab = tabs[0];
-      const url = activeTab ? activeTab.url : null;
-      activeDomain = extractDomain(url);
+    isLoading = true;
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      if (!tabs.length) return;
+      const tab = tabs[0];
+      const url = tab.url;
+      if (!url) return;
 
-      chrome.cookies.getAll({ url }, (cookies) => {
-        let size = cookies.length.toString();
-        chrome.action.setBadgeText({ text: size }); // Update badge
-      });
+      activeDomain = extractDomain(url);
+      await getAllResourceCookies(tab.id || 0);
     });
 
   if (!changeInfo.removed) {

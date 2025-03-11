@@ -12,7 +12,7 @@
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import ThirdPartyAlert from '$lib/components/custom/thirdPartyAlert.svelte';
 	import { RotateCw } from 'lucide-svelte';
-	import { extractDomain, getFavicon } from '$lib/utilities';
+	import { extractDomain } from '$lib/utilities';
 
 	let cookies = $state<CookieWithCategory[]>([]);
 	let isChrome = $state(typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id);
@@ -242,8 +242,27 @@
 			activeDomain = 'www.example.com';
 			isLoading = false;
 		}
+		getFavicon();
+	}
 
-		activeDomainFavicon = getFavicon(isChrome);
+	function getFavicon() {
+		if (isChrome) {
+			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+				const activeTab = tabs[0];
+
+				if (activeTab.favIconUrl) {
+					activeDomainFavicon = activeTab.favIconUrl;
+				}
+			});
+		} else {
+			const linkElements = document.querySelectorAll(
+				'link[rel="icon"], link[rel="shortcut icon"]'
+			) as NodeListOf<HTMLLinkElement>;
+
+			if (linkElements.length > 0) {
+				activeDomainFavicon = linkElements[0].href;
+			}
+		}
 	}
 
 	// Using Svelte 5's onMount

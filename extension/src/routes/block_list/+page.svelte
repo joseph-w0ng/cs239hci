@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ArrowLeft, Cookie } from 'lucide-svelte';
+	import { ArrowLeft } from 'lucide-svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { extractDomain, getFavicon } from '$lib/utilities';
+	import { extractDomain } from '$lib/utilities';
 	import fake_block_list from '$lib/data/block_list.json';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import * as Tooltip from '$lib/components/ui/tooltip/';
@@ -45,7 +45,27 @@
 			}, 1000);
 		}
 
-		activeDomainFavicon = getFavicon(isChrome);
+		getFavicon();
+	}
+
+	function getFavicon() {
+		if (isChrome) {
+			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+				const activeTab = tabs[0];
+
+				if (activeTab.favIconUrl) {
+					activeDomainFavicon = activeTab.favIconUrl;
+				}
+			});
+		} else {
+			const linkElements = document.querySelectorAll(
+				'link[rel="icon"], link[rel="shortcut icon"]'
+			) as NodeListOf<HTMLLinkElement>;
+
+			if (linkElements.length > 0) {
+				activeDomainFavicon = linkElements[0].href;
+			}
+		}
 	}
 
 	async function handleUnblockSelected() {

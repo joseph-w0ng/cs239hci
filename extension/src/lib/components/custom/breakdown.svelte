@@ -23,7 +23,9 @@
 			<div class="flex items-center justify-between">
 				<h2 class="text-base font-semibold">Quick Summary</h2>
 				<span class="text-sm"
-					><span class="font-semibold">{cookies.length}</span> cookies found</span
+					><span class="font-semibold">{cookies.length}</span> cookie{cookies.length === 1
+						? ''
+						: 's'} found</span
 				>
 			</div>
 			<div class="flex h-6 w-full overflow-clip rounded-md">

@@ -333,7 +333,7 @@
 {:else}
 	<BulkActionsBar {cookies} {groupedCookies} {deleteCookiesByCategory} />
 
-	<CookieList {cookies} {groupedCookies} {deleteCookie} {deleteSelectedCookies} />
+	<CookieList bind:activeDomain {cookies} {groupedCookies} {deleteCookie} {deleteSelectedCookies} />
 {/if}
 
 {#each resource_list as resource}

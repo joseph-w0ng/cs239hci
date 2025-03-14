@@ -4,9 +4,8 @@
 	import Button from '../ui/button/button.svelte';
 	import { extractRootDomain } from '$lib/categorize';
 	import { SvelteSet } from 'svelte/reactivity';
-	import * as Avatar from '$lib/components/ui/avatar/';
-	import * as Tooltip from '$lib/components/ui/tooltip/';
 	import Separator from '../ui/separator/separator.svelte';
+	import Favicon from './favicon.svelte';
 
 	let {
 		activeDomain,
@@ -78,21 +77,7 @@
 			<div class="flex items-center justify-between">
 				<div class="flex -space-x-1">
 					{#each uniqueDomains as domain (domain)}
-						<Tooltip.Provider delayDuration={100}>
-							<Tooltip.Root>
-								<Tooltip.Trigger>
-									<Avatar.Root class="size-5 bg-white" style="outline: 2px white solid">
-										<Avatar.Image
-											src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
-										/>
-										<Avatar.Fallback></Avatar.Fallback>
-									</Avatar.Root>
-								</Tooltip.Trigger>
-								<Tooltip.Content>
-									{domain}
-								</Tooltip.Content>
-							</Tooltip.Root>
-						</Tooltip.Provider>
+						<Favicon url={domain} style="outline: 2px white solid" />
 					{/each}
 				</div>
 				<Button

@@ -7,11 +7,13 @@
 	import { SvelteSet } from 'svelte/reactivity';
 
 	let {
+		activeDomain = $bindable(),
 		cookies = $bindable(),
 		groupedCookies = $bindable(),
 		deleteCookie,
 		deleteSelectedCookies
 	}: {
+		activeDomain: string;
 		cookies: CookieWithCategory[];
 		groupedCookies: Record<string, CookieWithCategory[]>;
 		deleteCookie: (cookie: CookieWithCategory) => Promise<void>;
@@ -76,7 +78,7 @@
 				<Accordion.Content>
 					<div class="flex flex-col gap-2">
 						{#each categoryCookies as cookie (cookie.name + cookie.domain + cookie.path)}
-							<IndividualCookie {cookie} {deleteCookie} {onSelect} />
+							<IndividualCookie bind:activeDomain {cookie} {deleteCookie} {onSelect} />
 						{/each}
 					</div>
 				</Accordion.Content>

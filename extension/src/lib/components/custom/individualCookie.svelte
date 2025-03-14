@@ -86,10 +86,13 @@
 		isLoading = true;
 
 		const prompt = `In a few sentences, Explain what this cookie likely does in a short, non-technical user-friendly way. Here are the cookie details:
+		
 		Name: ${cookie.name}
 		Domain: ${cookie.domain}
 		Path: ${cookie.path}
 		Value (truncated): ${cookie.value.substring(0, 100)}
+
+		The cookie is being used on ${activeDomain}.
 		`;
 
 		try {

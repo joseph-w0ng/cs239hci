@@ -175,7 +175,7 @@ setInterval(async () => {
       if (!url) return;
 
       activeDomain = extractDomain(url);
-      console.log(`executing at time ${Date.now()}`)
+      // console.log(`executing at time ${Date.now()}`)
       await getAllResourceCookies(tab.id || 0);
   });
 }, 1000); // Fetch cookies every seconds

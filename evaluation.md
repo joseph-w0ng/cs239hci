@@ -2,7 +2,7 @@
 
 Your goal is to assess the usability of your system. 
 
-Note: an extension was used to convert our shared team Google Doc into Markdown. As a result, there are a few issues with the formatting. We've also attached a PDF of our evaluation results since that is a bit easier to read.
+Note: an extension was used to convert our shared team Google Doc into Markdown. As a result, there are a few issues with the formatting. We've also attached a PDF of our evaluation results since that is a bit easier to read - it is in the same folder, titled HCI eval core.pdf
 
 
 1. [+5] Evaluate your system with at least 10 participants. Write and submit 0.5-1p of notes for each participant. 

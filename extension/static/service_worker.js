@@ -104,7 +104,6 @@ chrome.cookies.onChanged.addListener(changeInfo => {
       if (!url) return;
 
       activeDomain = extractDomain(url);
-      await getAllResourceCookies(tab.id || 0);
     });
 
   if (!changeInfo.removed) {
@@ -167,3 +166,16 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
 });
+
+setInterval(async () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      if (!tabs.length) return;
+      const tab = tabs[0];
+      const url = tab.url;
+      if (!url) return;
+
+      activeDomain = extractDomain(url);
+      console.log(`executing at time ${Date.now()}`)
+      await getAllResourceCookies(tab.id || 0);
+  });
+}, 1000); // Fetch cookies every seconds

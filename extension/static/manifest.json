@@ -9,7 +9,7 @@
 		"default_popup": "index.html"
 	},
 	"background": {
-		"service_worker": "service_worker.js",
+		"service_worker": "service-worker.js",
 		"type": "module"
 	},
 	"permissions": ["cookies", "storage", "scripting", "activeTab", "storage"],

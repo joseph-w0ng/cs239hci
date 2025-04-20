@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import categorizeCookie, { cookieCategories } from './lib/categorize';
+
 let isLoading: boolean = false;
 
 function extractDomain(url: string): string {
@@ -15,12 +19,12 @@ async function getResourceUrls(tabId: number): Promise<string[]> {
   }
 
   try {
-    const results = await chrome.scripting.executeScript<{ result: string[] }>({
+    const results = await chrome.scripting.executeScript<[], string[]>({
       target: { tabId },
       func: getPerformanceEntries,
     });
 
-    return results[0].result;
+    return results[0]?.result ?? [];
   } catch (error) {
     console.error('Error getting performance entries:', error);
     return [];
@@ -35,7 +39,7 @@ interface CookieInfo {
 // Function to get all cookies from all resources
 async function getAllResourceCookies(tabId: number): Promise<void> {
   try {
-    const resourceUrls = await getResourceUrls(tabId);
+    const resourceUrls : any = await getResourceUrls(tabId);
 
     const origins = resourceUrls
       .map((url) => {
@@ -47,7 +51,7 @@ async function getAllResourceCookies(tabId: number): Promise<void> {
       })
       .filter((url): url is string => Boolean(url) && url !== 'null');
 
-    const uniqueOrigins = new Set(origins);
+    const uniqueOrigins = new Set<string>(origins);
 
     if (activeDomain) {
       uniqueOrigins.add(`http://${activeDomain}`);
@@ -184,4 +188,3 @@ setInterval(() => {
     await getAllResourceCookies(tab.id ?? 0);
   });
 }, 1000);
-    

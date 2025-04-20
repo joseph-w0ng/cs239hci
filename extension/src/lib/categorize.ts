@@ -46,6 +46,7 @@ export default function categorizeCookie(cookie: chrome.cookies.Cookie, activeDo
     const path = cookie.path.toLowerCase();
 
     // Create a score-based system for more accurate categorization
+    // eslint-disable-next-line prefer-const
     let scores = {
         essential: 0,
         functional: 0,

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import categorizeCookie, { cookieCategories } from './lib/categorize';
+import CookieWithCategory from './app';
 
 let isLoading: boolean = false;
 
@@ -114,9 +115,21 @@ chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInf
   });
 
   if (!changeInfo.removed) {
-    console.log('Cookies changed: current domain - ', activeDomain);
+    console.log('Cookie added: current domain - ', activeDomain);
     chrome.storage.local.get(['siteData'], (result) => {
       const blockedCookies = result.siteData as Record<string, any[]>;
+      // To be replaced when preferences are implemented
+      const blockingPreferences = {
+        essential: false,
+        functional: false,
+        analytics: false,
+        marketing: true,
+        unknown: false
+      }
+
+      const category: CookieWithCategory = categorizeCookie(changeInfo.cookie, activeDomain);
+      const shouldBlock: boolean = blockingPreferences[category.category];
+
 
       if (blockedCookies && blockedCookies[activeDomain]) {
         const foundObject = blockedCookies[activeDomain].find(
@@ -127,18 +140,22 @@ chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInf
 
         console.log('Found object: ', foundObject);
 
-        if (foundObject) {
-          chrome.cookies.remove({
-            url: `https://${changeInfo.cookie.domain}${changeInfo.cookie.path}`,
-            name: changeInfo.cookie.name,
-          }, () => {
-            console.log(`Blocked and removed cookie: ${changeInfo.cookie.name}`);
-          });
+        if (foundObject || shouldBlock) {
+          removeCookie(changeInfo);
         }
       }
     });
   }
 });
+
+function removeCookie(changeInfo: chrome.cookies.CookieChangeInfo) {
+    chrome.cookies.remove({
+        url: `https://${changeInfo.cookie.domain}${changeInfo.cookie.path}`,
+        name: changeInfo.cookie.name,
+      }, () => {
+        console.log(`Blocked and removed cookie: ${changeInfo.cookie.name}`);
+      });
+}
 
 chrome.tabs.onActivated.addListener((activeInfo: chrome.tabs.TabActiveInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {

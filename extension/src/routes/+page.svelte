@@ -11,6 +11,7 @@
 	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import ThirdPartyAlert from '$lib/components/custom/thirdPartyAlert.svelte';
+	import TutorialOverlay from '$lib/components/custom/tutorialOverlay.svelte';
 	import { RotateCw } from 'lucide-svelte';
 	import { extractDomain } from '$lib/utilities';
 
@@ -23,6 +24,7 @@
 	let activeDomainFavicon = $state('');
 	let isLoading = $state(true);
 	let resource_list = $state([]);
+	let showTutorial = $state(false); // State for tutorial visibility
 
 	let groupedCookies: Record<string, CookieWithCategory[]> = $derived(
 		groupCookiesByCategory(cookies)
@@ -44,7 +46,6 @@
 		}
 	}
 
-	// Function to get performance entries (resource URLs) from the current tab
 	async function getResourceUrls(tabId: number) {
 		function getPerformanceEntries() {
 			return performance.getEntriesByType('resource').map((r) => r.name);
@@ -63,7 +64,6 @@
 		}
 	}
 
-	// Function to get all cookies from all resources
 	async function getAllResourceCookies(tabId: number) {
 		if (!isChrome) {
 			cookies = (fake_cookie_data as chrome.cookies.Cookie[]).map((cookie) =>
@@ -265,9 +265,36 @@
 		}
 	}
 
+	// Function to toggle tutorial visibility
+	function toggleTutorial() {
+		showTutorial = !showTutorial;
+	}
+	
+	// Handler for when tutorial is closed from the TutorialOverlay component
+	function handleTutorialClose() {
+		showTutorial = false;
+	}
+
 	// Using Svelte 5's onMount
 	onMount(() => {
 		refreshCookies();
+		
+		// Check if first time user
+		if (isChrome) {
+			chrome.storage.local.get(['firstTimeUser'], (result) => {
+				if (result.firstTimeUser === undefined) {
+					showTutorial = true;
+					chrome.storage.local.set({ firstTimeUser: false });
+				}
+			});
+		} else {
+			// For development
+			const firstTimeUser = localStorage.getItem('firstTimeUser');
+			if (!firstTimeUser) {
+				showTutorial = true;
+				localStorage.setItem('firstTimeUser', 'false');
+			}
+		}
 	});
 </script>
 
@@ -299,28 +326,43 @@
 	</div>
 
 	<div class="flex gap-2">
-		<Tooltip.Provider delayDuration={100}>
-			<Tooltip.Root>
-				<Tooltip.Trigger>
-					<Button variant="outline" onclick={refreshCookies} disabled={isLoading}>
-						{#if isLoading}
-							Loading...
-						{:else}
-							<RotateCw class="size-2" /> Cookies
-						{/if}
-					</Button>
-				</Tooltip.Trigger>
-				<Tooltip.Content>Reload cookies</Tooltip.Content>
-			</Tooltip.Root>
-		</Tooltip.Provider>
+		<!-- Tutorial button using plain HTML button -->
+		<button 
+		class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2"
+		on:click={toggleTutorial}
+	  >
+		<span class="text-xs">?</span>
+	  </button>
+		
+		<!-- Refresh button -->
+		<button
+		class="refresh-button inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+		on:click={refreshCookies}
+		disabled={isLoading}
+	  >
+		{#if isLoading}
+		  Loading...
+		{:else}
+		  <RotateCw class="size-2" /> Cookies
+		{/if}
+	  </button>
 
-		<Button href="/block_list">Manage Blocked Cookies</Button>
+		<!-- Manage blocked cookies button -->
+		<a 
+			href="/block_list"
+			class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+		>
+			Manage Blocked Cookies
+		</a>
 	</div>
 </header>
 
 <ThirdPartyAlert {activeDomain} {groupedCookies} {deleteSelectedCookies} />
 
-<Breakdown {cookies} {groupedCookies} />
+<!-- Add div wrappers with specific class names for tutorial targeting -->
+<div class="breakdown-chart">
+	<Breakdown {cookies} {groupedCookies} />
+</div>
 
 {#if isLoading}
 	<Separator />
@@ -331,9 +373,13 @@
 		{/each}
 	</div>
 {:else}
-	<BulkActionsBar {cookies} {groupedCookies} {deleteCookiesByCategory} />
+	<div class="bulk-actions-bar">
+		<BulkActionsBar {cookies} {groupedCookies} {deleteCookiesByCategory} />
+	</div>
 
-	<CookieList bind:activeDomain {cookies} {groupedCookies} {deleteCookie} {deleteSelectedCookies} />
+	<div class="cookie-list">
+		<CookieList bind:activeDomain {cookies} {groupedCookies} {deleteCookie} {deleteSelectedCookies} />
+	</div>
 {/if}
 
 {#each resource_list as resource}
@@ -341,3 +387,6 @@
 		{resource}
 	</div>
 {/each}
+
+<!-- Add the tutorial overlay component -->
+<TutorialOverlay isOpen={showTutorial} on:close={handleTutorialClose} />

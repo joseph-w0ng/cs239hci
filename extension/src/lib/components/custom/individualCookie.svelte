@@ -110,9 +110,9 @@
 
 <Dialog.Root>
 	<Dialog.Trigger>
-		<Card class="relative flex items-center gap-4 rounded-sm p-4 text-left shadow-none">
+		<Card class="cookie-card relative flex items-center gap-4 rounded-sm p-4 text-left shadow-none transition-all duration-200 hover:bg-gray-50 hover:shadow-md hover:brightness-[1.02]">
 			{#if cookie.category !== 'essential'}
-				<Checkbox
+				<Checkbox 
 					onclick={(e) => {
 						e.stopPropagation();
 						onSelect(cookie);
@@ -279,3 +279,11 @@
 		</Dialog.Header>
 	</Dialog.Content>
 </Dialog.Root>
+
+<style>
+  /* Additional styles for cookie card hover effect */
+  .cookie-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+</style>

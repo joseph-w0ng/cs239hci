@@ -1,7 +1,7 @@
 {
-	"name": "Active Cookies Viewer",
+	"name": "Cookie Monster",
 	"description": "Displays the current active cookies for the active website.",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"manifest_version": 3,
 	"action": {
 		"default_title": "View Active Cookies",

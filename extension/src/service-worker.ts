@@ -3,6 +3,14 @@
 import categorizeCookie, { cookieCategories } from './lib/categorize';
 
 let isLoading: boolean = false;
+let blockList: Record<string, any[]>;
+const blockingPreferences = {
+  essential: false,
+  functional: false,
+  analytics: false,
+  marketing: true,
+  unknown: false
+}
 
 function extractDomain(url: string): string {
   try {
@@ -40,6 +48,7 @@ interface CookieInfo {
 async function getAllResourceCookies(tabId: number): Promise<void> {
   try {
     const resourceUrls : any = await getResourceUrls(tabId);
+    console.log("Running getAllResourceCookies");
 
     const origins = resourceUrls
       .map((url) => {
@@ -77,20 +86,9 @@ async function getAllResourceCookies(tabId: number): Promise<void> {
     const allCookies: chrome.cookies.Cookie[] = [];
     const cookieNames = new Set<string>();
 
-    for (const { cookies: originCookies } of filtered) {
-      for (const cookie of originCookies) {
-        const cookieKey = `${cookie.domain}|${cookie.name}|${cookie.path}`;
-        if (!cookieNames.has(cookieKey)) {
-          cookieNames.add(cookieKey);
-          allCookies.push(cookie);
-        }
-      }
-    }
-
-    const size = allCookies.length.toString();
-    chrome.action.setBadgeText({ text: size });
-
-    console.log('Found cookies from all resources:', allCookies.length);
+    const originCookies = filtered.flatMap(({ cookies }) => cookies);
+    console.log("Calling removeCookies");
+    await removeCookies(originCookies);
 
     isLoading = false;
   } catch (error) {
@@ -113,46 +111,60 @@ chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInf
     activeDomain = extractDomain(url);
   });
 
+  console.log("change info: ", changeInfo);
   if (!changeInfo.removed) {
-    console.log('Cookie added: current domain - ', activeDomain);
-    chrome.storage.local.get(['siteData'], (result) => {
-      const blockedCookies = result.siteData as Record<string, any[]>;
-      // To be replaced when preferences are implemented
-      const blockingPreferences = {
-        essential: false,
-        functional: false,
-        analytics: false,
-        marketing: true,
-        unknown: false
-      }
-
-      const category: CookieWithCategory = categorizeCookie(changeInfo.cookie, activeDomain);
-      const shouldBlock: boolean = blockingPreferences[category.category];
-
-
-      if (blockedCookies && blockedCookies[activeDomain]) {
-        const foundObject = blockedCookies[activeDomain].find(
-          (item) =>
-            changeInfo.cookie.domain === item.domain &&
-            changeInfo.cookie.name === item.name
-        );
-
-        console.log('Found object: ', foundObject);
-
-        if (foundObject || shouldBlock) {
-          removeCookie(changeInfo);
-        }
-      }
-    });
+    console.log('Cookie attempted to be added: current domain - ', activeDomain);
+    const cookie: chrome.cookies.Cookie = changeInfo.cookie;
+    const category: any = categorizeCookie(cookie, activeDomain);
+    const foundObject = !!blockList?.[activeDomain]?.find(
+      (item) =>
+        cookie?.domain === item.domain &&
+        cookie?.name === item.name
+    ); // convert into a boolean
+    const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+    if (shouldBlock) {
+      deleteCookie(cookie, activeDomain, category.category);
+    }
   }
+  
 });
 
-function removeCookie(changeInfo: chrome.cookies.CookieChangeInfo) {
-    chrome.cookies.remove({
-        url: `https://${changeInfo.cookie.domain}${changeInfo.cookie.path}`,
-        name: changeInfo.cookie.name,
+
+async function removeCookies(cookies: chrome.cookies.Cookie[]) {
+
+  console.log("siteData: ", blockList);
+
+  const cookieNames: Set<string> = new Set<string>();
+  const cookiesToBlock: Set<chrome.cookies.Cookie> = new Set<chrome.cookies.Cookie>();
+  let cookieCount: number = 0;
+  for (const cookie of cookies) {
+    const cookieKey = `${cookie.domain}|${cookie.name}|${cookie.path}`;
+    const category: any = categorizeCookie(cookie, activeDomain);
+    const foundObject = !!blockList?.[activeDomain]?.find(
+      (item) =>
+        cookie?.domain === item.domain &&
+        cookie?.name === item.name
+    ); // convert into a boolean
+    const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+    if (shouldBlock) {
+      deleteCookie(cookie, activeDomain, category.category);
+    } else if (!cookieNames.has(cookieKey)) {
+      cookieNames.add(cookieKey);
+      cookieCount++;
+    }
+  }
+
+  chrome.action.setBadgeText({ text: cookieCount.toString() });
+  console.log('Found cookies from all resources:', cookieCount.toString());
+}
+
+function deleteCookie(cookie: chrome.cookies.Cookie, activeDomain: string, category: string) {
+  console.log('Found cookie to block: ', cookie.name, 'Category: ', category);
+  chrome.cookies.remove({
+        url: `https://${cookie.domain}${cookie.path}`,
+        name: cookie.name,
       }, () => {
-        console.log(`Blocked and removed cookie: ${changeInfo.cookie.name}`);
+        console.log(`Blocked and removed cookie: ${cookie.name}`);
       });
 }
 
@@ -199,8 +211,21 @@ setInterval(() => {
     const tab = tabs[0];
     const url = tab.url;
     if (!url) return;
-
+    
     activeDomain = extractDomain(url);
+    console.log("active domain:", activeDomain);
     await getAllResourceCookies(tab.id ?? 0);
   });
 }, 1000);
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.siteData) {
+    (async () => {
+      const result = await new Promise<{ siteData: Record<string, any[]> }>(
+        (resolve) => chrome.storage.local.get(['siteData'], resolve)
+      );
+      blockList = result.siteData as Record<string, any[]>;
+      console.log('blockList updated:', blockList);
+    })();
+  }
+});

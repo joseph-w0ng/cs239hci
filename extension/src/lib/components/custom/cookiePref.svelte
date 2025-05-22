@@ -47,7 +47,6 @@
       }
     ];
   
-    // State for preferences
     let preferences = $state({
       functional: true,
       analytics: false,
@@ -66,14 +65,12 @@
   
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          // For Chrome extension
           chrome.storage.sync.get(['cookiePreferences'], (result) => {
             if (result.cookiePreferences) {
               preferences = { ...preferences, ...result.cookiePreferences };
             }
           });
         } else {
-          // For development/web version
           const stored = localStorage.getItem('cookiePreferences');
           if (stored) {
             preferences = { ...preferences, ...JSON.parse(stored) };
@@ -92,18 +89,14 @@
   
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          // For Chrome extension
           chrome.storage.sync.set({ cookiePreferences: preferences }, () => {
             console.log('Cookie preferences saved:', preferences);
             isLoading = false;
             saveSuccess = true;
             
-            // Hide success message after 2 seconds
             setTimeout(() => {
               saveSuccess = false;
             }, 2000);
-  
-            // Notify background script of preference changes
             if (chrome.runtime) {
               chrome.runtime.sendMessage({ 
                 action: 'updateCookiePreferences', 
@@ -112,7 +105,6 @@
             }
           });
         } else {
-          // For development/web version
           localStorage.setItem('cookiePreferences', JSON.stringify(preferences));
           console.log('Cookie preferences saved to localStorage:', preferences);
           isLoading = false;
@@ -142,7 +134,6 @@
       savePreferences();
     }
   
-    // Export preferences for parent components to access
     export function getPreferences() {
       return preferences;
     }
@@ -196,7 +187,6 @@
       </Dialog.Header>
   
       <div class="space-y-4">
-        <!-- Essential Cookies (Always On) -->
         <Card class="p-4">
           <div class="flex items-center justify-between">
             <div class="flex items-start gap-3">
@@ -217,7 +207,6 @@
           </div>
         </Card>
   
-        <!-- Other Cookie Categories -->
         {#each cookieCategories as category}
           <Card class="p-4 transition-all duration-200 hover:bg-gray-50">
             <div class="flex items-center justify-between">
@@ -241,7 +230,6 @@
           </Card>
         {/each}
   
-        <!-- Current Settings Summary -->
         <Card class="p-3 bg-gray-50">
           <h4 class="text-sm font-medium mb-2">Current Settings:</h4>
           <div class="flex flex-wrap gap-2">
@@ -261,7 +249,6 @@
   </Dialog.Root>
   
   <style>
-    /* Additional styling for smooth interactions */
     :global(.cookie-preference-card:hover) {
       background-color: #f9fafb;
     }

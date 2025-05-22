@@ -2,15 +2,12 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
 
-  // Check for browser environment without using imports
   const isBrowser = typeof window !== 'undefined';
 
-  // Create event dispatcher
   const dispatch = createEventDispatcher<{
     close: void;
   }>();
 
-  // Prop for controlling visibility
   export let isOpen = false;
   
   interface TutorialStep {
@@ -21,7 +18,6 @@
     position: 'top' | 'right' | 'bottom' | 'left';
   }
 
-  // Define the tutorial steps with simple selectors
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'header',
@@ -90,23 +86,17 @@
   }
 
   function closeTutorial() {
-    // Clean up any highlights
     if (isBrowser) {
       cleanupHighlights();
     }
-    
-    // Use dispatch to inform parent component
     dispatch('close');
   }
   
   function cleanupHighlights() {
-    // Only run in browser environment
     if (!isBrowser) return;
     
-    // Remove all highlight elements and their event listeners
     const existingHighlights = document.querySelectorAll('.tutorial-highlight');
     existingHighlights.forEach(el => {
-      // Remove scroll listeners if attached
       const scrollListener = (el as any)._scrollListener;
       if (scrollListener) {
         window.removeEventListener('scroll', scrollListener, true);
@@ -117,10 +107,8 @@
   }
   
   function highlightCurrentElement() {
-    // Only run in browser environment
     if (!isBrowser) return;
     
-    // Clear any previous highlights
     cleanupHighlights();
     
     if (!isOpen) return;
@@ -133,12 +121,10 @@
       return;
     }
     
-    // Create highlight element
     const highlight = document.createElement('div');
     highlight.className = 'tutorial-highlight';
     document.body.appendChild(highlight);
     
-    // Function to update highlight position
     function updateHighlightPosition() {
       if (!targetElement || !highlight.parentNode) return;
       
@@ -154,19 +140,15 @@
       highlight.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
       highlight.style.zIndex = '49';
       
-      // Also update popup position
       updatePopupPosition(rect);
     }
     
-    // Initial positioning
     updateHighlightPosition();
     
-    // Add scroll listener to update position when scrolling
     const scrollListener = () => updateHighlightPosition();
     window.addEventListener('scroll', scrollListener, true); // Use capture phase to catch all scroll events
     window.addEventListener('resize', scrollListener);
     
-    // Store the listener for cleanup
     highlight.dataset.scrollListener = 'attached';
     (highlight as any)._scrollListener = scrollListener;
   }
@@ -207,13 +189,11 @@
     popup.style.top = `${popupTop}px`;
   }
   
-  // Initialize on mount
   onMount(() => {
     if (isOpen && isBrowser) {
       setTimeout(highlightCurrentElement, 100);
     }
     
-    // Cleanup when component is destroyed
     return () => {
       if (isBrowser) {
         cleanupHighlights();
@@ -221,7 +201,6 @@
     };
   });
   
-  // Watch for changes to isOpen
   $: {
     if (isOpen && isBrowser) {
       setTimeout(highlightCurrentElement, 100);
@@ -233,17 +212,14 @@
   $: currentTutorialStep = tutorialSteps[currentStep];
   $: isLastStep = currentStep === tutorialSteps.length - 1;
 
-  // Handle close button click
   function handleCloseClick() {
     closeTutorial();
   }
 
-  // Handle next button click
   function handleNextClick() {
     nextStep();
   }
 
-  // Handle previous button click
   function handlePrevClick() {
     prevStep();
   }
@@ -252,7 +228,6 @@
 <!-- Tutorial overlay -->
 {#if isOpen && currentTutorialStep}
   <div class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-    <!-- Popup with its own positioning -->
     <div class="tutorial-popup bg-white rounded-lg p-4 shadow-lg max-w-xs absolute pointer-events-auto">
       <button 
         class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"

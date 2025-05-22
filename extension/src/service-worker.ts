@@ -4,6 +4,55 @@ import categorizeCookie, { cookieCategories } from './lib/categorize';
 
 let isLoading: boolean = false;
 
+
+
+function createBlockingPreferencesStore() {
+  // Default values
+  const defaultPreferences = {
+    essential: true,
+    functional: true,
+    analytics: false,
+    marketing: false
+  };
+
+  let blockingPreferences = { ...defaultPreferences };
+
+  // Load from storage
+  function loadPreferences() {
+    try {
+      const storedPreferences = localStorage.getItem('cookiePreferences');
+      if (storedPreferences) {
+        const preferences = JSON.parse(storedPreferences);
+        
+        blockingPreferences = {
+          essential: true, // Always true
+          functional: preferences.functional !== undefined ? preferences.functional : defaultPreferences.functional,
+          analytics: preferences.analytics !== undefined ? preferences.analytics : defaultPreferences.analytics,
+          marketing: preferences.marketing !== undefined ? preferences.marketing : defaultPreferences.marketing
+        };
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+      blockingPreferences = { ...defaultPreferences };
+    }
+  }
+
+  // Listen for storage changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'cookiePreferences') {
+      loadPreferences();
+    }
+  });
+
+  // Initial load
+  loadPreferences();
+
+  return blockingPreferences;
+}
+
+const blockingPreferences = createBlockingPreferencesStore();
+
+
 function extractDomain(url: string): string {
   try {
     const urlObj = new URL(url);
@@ -77,20 +126,8 @@ async function getAllResourceCookies(tabId: number): Promise<void> {
     const allCookies: chrome.cookies.Cookie[] = [];
     const cookieNames = new Set<string>();
 
-    for (const { cookies: originCookies } of filtered) {
-      for (const cookie of originCookies) {
-        const cookieKey = `${cookie.domain}|${cookie.name}|${cookie.path}`;
-        if (!cookieNames.has(cookieKey)) {
-          cookieNames.add(cookieKey);
-          allCookies.push(cookie);
-        }
-      }
-    }
-
-    const size = allCookies.length.toString();
-    chrome.action.setBadgeText({ text: size });
-
-    console.log('Found cookies from all resources:', allCookies.length);
+    const originCookies = filtered.flatMap(({ cookies }) => cookies);
+    await updateDisplayBadge(originCookies);
 
     isLoading = false;
   } catch (error) {
@@ -103,42 +140,82 @@ let activeDomain = '';
 
 chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInfo) => {
   isLoading = true;
-
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs.length) return;
-    const tab = tabs[0];
-    const url = tab.url;
-    if (!url) return;
-
-    activeDomain = extractDomain(url);
-  });
-
-  if (!changeInfo.removed) {
-    console.log('Cookies changed: current domain - ', activeDomain);
-    chrome.storage.local.get(['siteData'], (result) => {
-      const blockedCookies = result.siteData as Record<string, any[]>;
-
-      if (blockedCookies && blockedCookies[activeDomain]) {
-        const foundObject = blockedCookies[activeDomain].find(
+  let blockList: Record<string, any[]> = {};
+  (async () => {
+    const result: any = await new Promise<{ siteData: Record<string, any[]> }>(
+      (resolve) => chrome.storage.local.get(['siteData'], resolve)
+    );
+    blockList = result.siteData;
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (!tabs.length) return;
+      const tab = tabs[0];
+      const url = tab.url;
+      if (!url) return;
+  
+      activeDomain = extractDomain(url);
+  
+      if (!changeInfo.removed) {
+        console.log('Cookie attempted to be added: current domain - ', activeDomain);
+        const cookie: chrome.cookies.Cookie = changeInfo.cookie;
+        const category: any = categorizeCookie(cookie, activeDomain);
+        const foundObject = !!blockList?.[activeDomain]?.find(
           (item) =>
-            changeInfo.cookie.domain === item.domain &&
-            changeInfo.cookie.name === item.name
-        );
-
-        console.log('Found object: ', foundObject);
-
-        if (foundObject) {
-          chrome.cookies.remove({
-            url: `https://${changeInfo.cookie.domain}${changeInfo.cookie.path}`,
-            name: changeInfo.cookie.name,
-          }, () => {
-            console.log(`Blocked and removed cookie: ${changeInfo.cookie.name}`);
-          });
+            cookie?.domain === item.domain &&
+            cookie?.name === item.name
+        ); // convert into a boolean
+        const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+        console.log("shouldBlock: ", shouldBlock);
+        if (shouldBlock) {
+          deleteCookie(cookie, activeDomain, category.category);
         }
       }
-    });
-  }
+    });  
+  })();
 });
+
+
+async function updateDisplayBadge(cookies: chrome.cookies.Cookie[]) {
+  let blockList: Record<string, any[]> = {};
+  (async () => {
+    const result: any = await new Promise<{ siteData: Record<string, any[]> }>(
+      (resolve) => chrome.storage.local.get(['siteData'], resolve)
+    );
+    blockList = result.siteData;
+    console.log("blockList:", blockList);
+
+    const cookieNames: Set<string> = new Set<string>();
+    const cookiesToBlock: Set<chrome.cookies.Cookie> = new Set<chrome.cookies.Cookie>();
+    let cookieCount: number = 0;
+    for (const cookie of cookies) {
+      const cookieKey = `${cookie.domain}|${cookie.name}|${cookie.path}`;
+      const category: any = categorizeCookie(cookie, activeDomain);
+      const foundObject = !!blockList?.[activeDomain]?.find(
+        (item) =>
+          cookie?.domain === item.domain &&
+          cookie?.name === item.name
+      ); // convert into a boolean
+      const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+      // const shouldBlock = false;
+      if (shouldBlock) {
+        deleteCookie(cookie, activeDomain, category.category);
+      } else if (!cookieNames.has(cookieKey)) {
+        cookieNames.add(cookieKey);
+        cookieCount++;
+      }
+      chrome.action.setBadgeText({text: cookieCount.toString()});
+    }
+  })();
+}
+
+function deleteCookie(cookie: chrome.cookies.Cookie, activeDomain: string, category: string) {
+  console.log('Found cookie to block: ', cookie.name, 'Category: ', category);
+  chrome.cookies.remove({
+        url: `https://${cookie.domain}${cookie.path}`,
+        name: cookie.name,
+      }, () => {
+        console.log(`Blocked and removed cookie: ${cookie.name}`);
+      });
+}
 
 chrome.tabs.onActivated.addListener((activeInfo: chrome.tabs.TabActiveInfo) => {
   chrome.tabs.get(activeInfo.tabId, (tab) => {
@@ -183,8 +260,9 @@ setInterval(() => {
     const tab = tabs[0];
     const url = tab.url;
     if (!url) return;
-
+    
     activeDomain = extractDomain(url);
+    console.log("active domain:", activeDomain);
     await getAllResourceCookies(tab.id ?? 0);
   });
 }, 1000);

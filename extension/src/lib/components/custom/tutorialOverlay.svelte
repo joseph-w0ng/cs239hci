@@ -56,23 +56,18 @@
       title: 'Refresh Button',
       description: 'Reload to see the latest cookies on this page.',
       element: '.refresh-button',
+      position: 'left'
+    },
+    {
+      id: 'preferences',
+      title: 'Cookie Preferences',
+      description: 'Set your cookie blocking preferences for functional, analytics, and marketing cookies.',
+      element: '.preferences-button',
       position: 'bottom'
-    }
+    },
   ];
 
   let currentStep = 0;
-  let prevIsOpen = isOpen;
-  
-  // Reset to first step whenever tutorial is opened
-  $: if (isOpen && !prevIsOpen) {
-    currentStep = 0;
-    prevIsOpen = isOpen;
-    if (isBrowser) {
-      setTimeout(highlightCurrentElement, 100);
-    }
-  } else if (!isOpen && prevIsOpen) {
-    prevIsOpen = isOpen;
-  }
   
   function nextStep() {
     if (currentStep < tutorialSteps.length - 1) {
@@ -108,9 +103,17 @@
     // Only run in browser environment
     if (!isBrowser) return;
     
-    // Remove all highlight elements
+    // Remove all highlight elements and their event listeners
     const existingHighlights = document.querySelectorAll('.tutorial-highlight');
-    existingHighlights.forEach(el => el.remove());
+    existingHighlights.forEach(el => {
+      // Remove scroll listeners if attached
+      const scrollListener = (el as any)._scrollListener;
+      if (scrollListener) {
+        window.removeEventListener('scroll', scrollListener, true);
+        window.removeEventListener('resize', scrollListener);
+      }
+      el.remove();
+    });
   }
   
   function highlightCurrentElement() {
@@ -135,23 +138,44 @@
     highlight.className = 'tutorial-highlight';
     document.body.appendChild(highlight);
     
-    // Position the highlight
-    const rect = targetElement.getBoundingClientRect();
-    highlight.style.position = 'fixed';
-    highlight.style.top = `${rect.top - 4}px`;
-    highlight.style.left = `${rect.left - 4}px`;
-    highlight.style.width = `${rect.width + 8}px`;
-    highlight.style.height = `${rect.height + 8}px`;
-    highlight.style.border = '2px solid rgba(59, 130, 246, 0.8)';
-    highlight.style.borderRadius = '4px';
-    highlight.style.pointerEvents = 'none';
-    highlight.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
-    highlight.style.zIndex = '49';
+    // Function to update highlight position
+    function updateHighlightPosition() {
+      if (!targetElement || !highlight.parentNode) return;
+      
+      const rect = targetElement.getBoundingClientRect();
+      highlight.style.position = 'fixed';
+      highlight.style.top = `${rect.top - 4}px`;
+      highlight.style.left = `${rect.left - 4}px`;
+      highlight.style.width = `${rect.width + 8}px`;
+      highlight.style.height = `${rect.height + 8}px`;
+      highlight.style.border = '2px solid rgba(59, 130, 246, 0.8)';
+      highlight.style.borderRadius = '4px';
+      highlight.style.pointerEvents = 'none';
+      highlight.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
+      highlight.style.zIndex = '49';
+      
+      // Also update popup position
+      updatePopupPosition(rect);
+    }
     
-    // Position the popup
+    // Initial positioning
+    updateHighlightPosition();
+    
+    // Add scroll listener to update position when scrolling
+    const scrollListener = () => updateHighlightPosition();
+    window.addEventListener('scroll', scrollListener, true); // Use capture phase to catch all scroll events
+    window.addEventListener('resize', scrollListener);
+    
+    // Store the listener for cleanup
+    highlight.dataset.scrollListener = 'attached';
+    (highlight as any)._scrollListener = scrollListener;
+  }
+  
+  function updatePopupPosition(rect: DOMRect) {
     const popup = document.querySelector('.tutorial-popup') as HTMLElement;
     if (!popup) return;
     
+    const step = tutorialSteps[currentStep];
     let popupLeft, popupTop;
     const popupWidth = popup.offsetWidth;
     const popupHeight = popup.offsetHeight;
@@ -186,8 +210,6 @@
   // Initialize on mount
   onMount(() => {
     if (isOpen && isBrowser) {
-      // Reset to first step
-      currentStep = 0;
       setTimeout(highlightCurrentElement, 100);
     }
     

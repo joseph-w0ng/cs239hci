@@ -9,8 +9,8 @@ let isLoading: boolean = false;
 function createBlockingPreferencesStore() {
   // Default values
   const defaultPreferences = {
-    essential: false,
-    functional: false,
+    essential: true,
+    functional: true,
     analytics: false,
     marketing: false
   };
@@ -19,30 +19,29 @@ function createBlockingPreferencesStore() {
 
   // Load from storage
   function loadPreferences() {
-    try {
-      const storedPreferences = localStorage.getItem('cookiePreferences');
-      if (storedPreferences) {
-        const preferences = JSON.parse(storedPreferences);
-        
-        blockingPreferences = {
-          essential: true, // Always true
-          functional: preferences.functional !== undefined ? preferences.functional : defaultPreferences.functional,
-          analytics: preferences.analytics !== undefined ? preferences.analytics : defaultPreferences.analytics,
-          marketing: preferences.marketing !== undefined ? preferences.marketing : defaultPreferences.marketing
-        };
+    (async () => {
+      try {
+        const result: any = await new Promise<{ siteData: any }>(
+          (resolve) => chrome.storage.local.get(['cookiePreferences'], resolve)
+        );
+    
+        const storedPreferences = result.siteData;
+        if (storedPreferences) {
+          const preferences = JSON.parse(storedPreferences);
+    
+          blockingPreferences = {
+            essential: true, // Always true
+            functional: preferences.functional !== undefined ? preferences.functional : defaultPreferences.functional,
+            analytics: preferences.analytics !== undefined ? preferences.analytics : defaultPreferences.analytics,
+            marketing: preferences.marketing !== undefined ? preferences.marketing : defaultPreferences.marketing,
+          };
+        }
+      } catch (error) {
+        console.error('Error loading preferences:', error);
+        blockingPreferences = { ...defaultPreferences };
       }
-    } catch (error) {
-      console.error('Error loading preferences:', error);
-      blockingPreferences = { ...defaultPreferences };
-    }
+    })();
   }
-
-  // Listen for storage changes
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'cookiePreferences') {
-      loadPreferences();
-    }
-  });
 
   // Initial load
   loadPreferences();
@@ -194,7 +193,7 @@ async function updateDisplayBadge(cookies: chrome.cookies.Cookie[]) {
           cookie?.domain === item.domain &&
           cookie?.name === item.name
       ); // convert into a boolean
-      const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+      const shouldBlock: boolean = !blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
       // const shouldBlock = false;
       if (shouldBlock) {
         deleteCookie(cookie, activeDomain, category.category);
@@ -251,6 +250,13 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.storage.local.set({ siteData: {} });
     }
   });
+});
+
+// Listen for storage changes
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.cookiePreferences) {
+    createBlockingPreferencesStore(); // Redefine this function to work in the service worker context
+  }
 });
 
 // Run every second

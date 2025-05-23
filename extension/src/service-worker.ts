@@ -9,8 +9,8 @@ let isLoading: boolean = false;
 function createBlockingPreferencesStore() {
   // Default values
   const defaultPreferences = {
-    essential: true,
-    functional: true,
+    essential: false,
+    functional: false,
     analytics: false,
     marketing: false
   };
@@ -163,7 +163,7 @@ chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInf
             cookie?.domain === item.domain &&
             cookie?.name === item.name
         ); // convert into a boolean
-        const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+        const shouldBlock: boolean = !blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
         console.log("shouldBlock: ", shouldBlock);
         if (shouldBlock) {
           deleteCookie(cookie, activeDomain, category.category);

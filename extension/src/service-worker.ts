@@ -4,13 +4,53 @@ import categorizeCookie, { cookieCategories } from './lib/categorize';
 
 let isLoading: boolean = false;
 
-const blockingPreferences = {
-  essential: false,
-  functional: false,
-  analytics: false,
-  marketing: true,
-  unknown: false
+
+
+function createBlockingPreferencesStore() {
+  // Default values
+  const defaultPreferences = {
+    essential: true,
+    functional: true,
+    analytics: false,
+    marketing: false
+  };
+
+  let blockingPreferences = { ...defaultPreferences };
+
+  // Load from storage
+  function loadPreferences() {
+    try {
+      const storedPreferences = localStorage.getItem('cookiePreferences');
+      if (storedPreferences) {
+        const preferences = JSON.parse(storedPreferences);
+        
+        blockingPreferences = {
+          essential: true, // Always true
+          functional: preferences.functional !== undefined ? preferences.functional : defaultPreferences.functional,
+          analytics: preferences.analytics !== undefined ? preferences.analytics : defaultPreferences.analytics,
+          marketing: preferences.marketing !== undefined ? preferences.marketing : defaultPreferences.marketing
+        };
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error);
+      blockingPreferences = { ...defaultPreferences };
+    }
+  }
+
+  // Listen for storage changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'cookiePreferences') {
+      loadPreferences();
+    }
+  });
+
+  // Initial load
+  loadPreferences();
+
+  return blockingPreferences;
 }
+
+const blockingPreferences = createBlockingPreferencesStore();
 
 
 function extractDomain(url: string): string {

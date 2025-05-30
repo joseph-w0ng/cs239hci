@@ -4,14 +4,39 @@ import categorizeCookie, { cookieCategories } from './lib/categorize';
 
 let isLoading: boolean = false;
 
-const blockingPreferences = {
-  essential: false,
-  functional: false,
-  analytics: false,
-  marketing: true,
-  unknown: false
-}
+let blockingPreferences = {
+  essential: true,
+  functional: true,
+  analytics: true,
+  marketing: true
+};
 
+
+async function loadBlockingPreferences() {
+  const defaultPreferences = {
+    essential: true,
+    functional: true,
+    analytics: true,
+    marketing: true
+  };
+
+  try {
+    const result = await new Promise<{ cookiePreferences?: any }>((resolve) =>
+      chrome.storage.sync.get(['cookiePreferences'], resolve)
+    );
+
+    const prefs = result.cookiePreferences || {};
+    return {
+      essential: true,
+      functional: prefs.functional ?? defaultPreferences.functional,
+      analytics: prefs.analytics ?? defaultPreferences.analytics,
+      marketing: prefs.marketing ?? defaultPreferences.marketing
+    };
+  } catch (e) {
+    console.error('[SW] Failed to load preferences:', e);
+    return defaultPreferences;
+  }
+}
 
 function extractDomain(url: string): string {
   try {
@@ -123,7 +148,7 @@ chrome.cookies.onChanged.addListener((changeInfo: chrome.cookies.CookieChangeInf
             cookie?.domain === item.domain &&
             cookie?.name === item.name
         ); // convert into a boolean
-        const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+        const shouldBlock: boolean = !blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
         console.log("shouldBlock: ", shouldBlock);
         if (shouldBlock) {
           deleteCookie(cookie, activeDomain, category.category);
@@ -154,7 +179,7 @@ async function updateDisplayBadge(cookies: chrome.cookies.Cookie[]) {
           cookie?.domain === item.domain &&
           cookie?.name === item.name
       ); // convert into a boolean
-      const shouldBlock: boolean = blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
+      const shouldBlock: boolean = !blockingPreferences[category.category as keyof typeof blockingPreferences] || foundObject;
       // const shouldBlock = false;
       if (shouldBlock) {
         deleteCookie(cookie, activeDomain, category.category);
@@ -204,6 +229,7 @@ chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: chrome.tabs.TabCha
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.action.setBadgeText({ text: '0' });
+  // createBlockingPreferencesStore().then((prefs) => blockingPreferences = prefs); 
 
   chrome.storage.local.get(['siteData'], (result) => {
     if (!Object.hasOwn(result, 'siteData')) {
@@ -213,8 +239,27 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  console.log('hi');
+  if (msg.action === 'updateCookiePreferences') {
+    console.log('[SW] Preferences updated via message:', msg.preferences);
+    // Optionally update global state
+    loadBlockingPreferences().then((prefs) => {
+      blockingPreferences = prefs;
+      console.log('[SW] Reloaded blockingPreferences:', blockingPreferences);
+    });
+  }
+});
+
 // Run every second
 setInterval(() => {
+  console.log(blockingPreferences);
+
+  loadBlockingPreferences().then((prefs) => {
+    blockingPreferences = prefs;
+    console.log('[SW] Reloaded blockingPreferences:', blockingPreferences);
+  });
+
   chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     if (!tabs.length) return;
     const tab = tabs[0];

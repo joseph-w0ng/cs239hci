@@ -4,53 +4,81 @@ import categorizeCookie, { cookieCategories } from './lib/categorize';
 
 let isLoading: boolean = false;
 
+let blockingPreferences = {
+  essential: true,
+  functional: true,
+  analytics: true,
+  marketing: true
+};
 
+// async function createBlockingPreferencesStore() {
+//   // Default values
+//   const defaultPreferences = {
+//     essential: true,
+//     functional: true,
+//     analytics: true,
+//     marketing: true
+//   };
 
-function createBlockingPreferencesStore() {
-  // Default values
+//   let blockingPreferences = { ...defaultPreferences };
+
+//   // Load from storage
+//   function loadPreferences() {
+//     (async () => {
+//       try {
+//         const result: any = await new Promise<{ siteData: any }>(
+//           (resolve) => chrome.storage.local.get(['cookiePreferences'], resolve)
+//         );
+    
+//         const storedPreferences = result.siteData;
+//         if (storedPreferences) {
+//           const preferences = JSON.parse(storedPreferences);
+    
+//           blockingPreferences = {
+//             essential: true, // Always true
+//             functional: preferences.functional !== undefined ? preferences.functional : defaultPreferences.functional,
+//             analytics: preferences.analytics !== undefined ? preferences.analytics : defaultPreferences.analytics,
+//             marketing: preferences.marketing !== undefined ? preferences.marketing : defaultPreferences.marketing,
+//           };
+//         }
+//       } catch (error) {
+//         console.error('Error loading preferences:', error);
+//         blockingPreferences = { ...defaultPreferences };
+//       }
+//     })();
+//   }
+
+//   // Initial load
+//   loadPreferences();
+
+//   return blockingPreferences;
+// }
+
+async function loadBlockingPreferences() {
   const defaultPreferences = {
     essential: true,
     functional: true,
-    analytics: false,
-    marketing: false
+    analytics: true,
+    marketing: true
   };
 
-  let blockingPreferences = { ...defaultPreferences };
+  try {
+    const result = await new Promise<{ cookiePreferences?: any }>((resolve) =>
+      chrome.storage.sync.get(['cookiePreferences'], resolve)
+    );
 
-  // Load from storage
-  function loadPreferences() {
-    (async () => {
-      try {
-        const result: any = await new Promise<{ siteData: any }>(
-          (resolve) => chrome.storage.local.get(['cookiePreferences'], resolve)
-        );
-    
-        const storedPreferences = result.siteData;
-        if (storedPreferences) {
-          const preferences = JSON.parse(storedPreferences);
-    
-          blockingPreferences = {
-            essential: true, // Always true
-            functional: preferences.functional !== undefined ? preferences.functional : defaultPreferences.functional,
-            analytics: preferences.analytics !== undefined ? preferences.analytics : defaultPreferences.analytics,
-            marketing: preferences.marketing !== undefined ? preferences.marketing : defaultPreferences.marketing,
-          };
-        }
-      } catch (error) {
-        console.error('Error loading preferences:', error);
-        blockingPreferences = { ...defaultPreferences };
-      }
-    })();
+    const prefs = result.cookiePreferences || {};
+    return {
+      essential: true,
+      functional: prefs.functional ?? defaultPreferences.functional,
+      analytics: prefs.analytics ?? defaultPreferences.analytics,
+      marketing: prefs.marketing ?? defaultPreferences.marketing
+    };
+  } catch (e) {
+    console.error('[SW] Failed to load preferences:', e);
+    return defaultPreferences;
   }
-
-  // Initial load
-  loadPreferences();
-
-  return blockingPreferences;
 }
-
-const blockingPreferences = createBlockingPreferencesStore();
-
 
 function extractDomain(url: string): string {
   try {
@@ -243,6 +271,7 @@ chrome.tabs.onUpdated.addListener((tabId: number, changeInfo: chrome.tabs.TabCha
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.action.setBadgeText({ text: '0' });
+  // createBlockingPreferencesStore().then((prefs) => blockingPreferences = prefs); 
 
   chrome.storage.local.get(['siteData'], (result) => {
     if (!Object.hasOwn(result, 'siteData')) {
@@ -252,15 +281,27 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Listen for storage changes
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes.cookiePreferences) {
-    createBlockingPreferencesStore(); // Redefine this function to work in the service worker context
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  console.log('hi');
+  if (msg.action === 'updateCookiePreferences') {
+    console.log('[SW] Preferences updated via message:', msg.preferences);
+    // Optionally update global state
+    loadBlockingPreferences().then((prefs) => {
+      blockingPreferences = prefs;
+      console.log('[SW] Reloaded blockingPreferences:', blockingPreferences);
+    });
   }
 });
 
 // Run every second
 setInterval(() => {
+  console.log(blockingPreferences);
+
+  loadBlockingPreferences().then((prefs) => {
+    blockingPreferences = prefs;
+    console.log('[SW] Reloaded blockingPreferences:', blockingPreferences);
+  });
+  
   chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     if (!tabs.length) return;
     const tab = tabs[0];

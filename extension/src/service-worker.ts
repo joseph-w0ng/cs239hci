@@ -11,7 +11,6 @@ let blockingPreferences = {
   marketing: true
 };
 
-
 async function loadBlockingPreferences() {
   const defaultPreferences = {
     essential: true,

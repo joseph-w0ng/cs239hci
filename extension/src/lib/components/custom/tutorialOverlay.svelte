@@ -2,15 +2,12 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
 
-  // Check for browser environment without using imports
   const isBrowser = typeof window !== 'undefined';
 
-  // Create event dispatcher
   const dispatch = createEventDispatcher<{
     close: void;
   }>();
 
-  // Prop for controlling visibility
   export let isOpen = false;
   
   interface TutorialStep {
@@ -21,7 +18,6 @@
     position: 'top' | 'right' | 'bottom' | 'left';
   }
 
-  // Define the tutorial steps with simple selectors
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'header',
@@ -56,23 +52,18 @@
       title: 'Refresh Button',
       description: 'Reload to see the latest cookies on this page.',
       element: '.refresh-button',
+      position: 'left'
+    },
+    {
+      id: 'preferences',
+      title: 'Cookie Preferences',
+      description: 'Set your cookie blocking preferences for functional, analytics, and marketing cookies.',
+      element: '.preferences-button',
       position: 'bottom'
-    }
+    },
   ];
 
   let currentStep = 0;
-  let prevIsOpen = isOpen;
-  
-  // Reset to first step whenever tutorial is opened
-  $: if (isOpen && !prevIsOpen) {
-    currentStep = 0;
-    prevIsOpen = isOpen;
-    if (isBrowser) {
-      setTimeout(highlightCurrentElement, 100);
-    }
-  } else if (!isOpen && prevIsOpen) {
-    prevIsOpen = isOpen;
-  }
   
   function nextStep() {
     if (currentStep < tutorialSteps.length - 1) {
@@ -95,29 +86,29 @@
   }
 
   function closeTutorial() {
-    // Clean up any highlights
     if (isBrowser) {
       cleanupHighlights();
     }
-    
-    // Use dispatch to inform parent component
     dispatch('close');
   }
   
   function cleanupHighlights() {
-    // Only run in browser environment
     if (!isBrowser) return;
     
-    // Remove all highlight elements
     const existingHighlights = document.querySelectorAll('.tutorial-highlight');
-    existingHighlights.forEach(el => el.remove());
+    existingHighlights.forEach(el => {
+      const scrollListener = (el as any)._scrollListener;
+      if (scrollListener) {
+        window.removeEventListener('scroll', scrollListener, true);
+        window.removeEventListener('resize', scrollListener);
+      }
+      el.remove();
+    });
   }
   
   function highlightCurrentElement() {
-    // Only run in browser environment
     if (!isBrowser) return;
     
-    // Clear any previous highlights
     cleanupHighlights();
     
     if (!isOpen) return;
@@ -130,28 +121,43 @@
       return;
     }
     
-    // Create highlight element
     const highlight = document.createElement('div');
     highlight.className = 'tutorial-highlight';
     document.body.appendChild(highlight);
     
-    // Position the highlight
-    const rect = targetElement.getBoundingClientRect();
-    highlight.style.position = 'fixed';
-    highlight.style.top = `${rect.top - 4}px`;
-    highlight.style.left = `${rect.left - 4}px`;
-    highlight.style.width = `${rect.width + 8}px`;
-    highlight.style.height = `${rect.height + 8}px`;
-    highlight.style.border = '2px solid rgba(59, 130, 246, 0.8)';
-    highlight.style.borderRadius = '4px';
-    highlight.style.pointerEvents = 'none';
-    highlight.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
-    highlight.style.zIndex = '49';
+    function updateHighlightPosition() {
+      if (!targetElement || !highlight.parentNode) return;
+      
+      const rect = targetElement.getBoundingClientRect();
+      highlight.style.position = 'fixed';
+      highlight.style.top = `${rect.top - 4}px`;
+      highlight.style.left = `${rect.left - 4}px`;
+      highlight.style.width = `${rect.width + 8}px`;
+      highlight.style.height = `${rect.height + 8}px`;
+      highlight.style.border = '2px solid rgba(59, 130, 246, 0.8)';
+      highlight.style.borderRadius = '4px';
+      highlight.style.pointerEvents = 'none';
+      highlight.style.boxShadow = '0 0 0 9999px rgba(0, 0, 0, 0.5)';
+      highlight.style.zIndex = '49';
+      
+      updatePopupPosition(rect);
+    }
     
-    // Position the popup
+    updateHighlightPosition();
+    
+    const scrollListener = () => updateHighlightPosition();
+    window.addEventListener('scroll', scrollListener, true); // Use capture phase to catch all scroll events
+    window.addEventListener('resize', scrollListener);
+    
+    highlight.dataset.scrollListener = 'attached';
+    (highlight as any)._scrollListener = scrollListener;
+  }
+  
+  function updatePopupPosition(rect: DOMRect) {
     const popup = document.querySelector('.tutorial-popup') as HTMLElement;
     if (!popup) return;
     
+    const step = tutorialSteps[currentStep];
     let popupLeft, popupTop;
     const popupWidth = popup.offsetWidth;
     const popupHeight = popup.offsetHeight;
@@ -183,15 +189,11 @@
     popup.style.top = `${popupTop}px`;
   }
   
-  // Initialize on mount
   onMount(() => {
     if (isOpen && isBrowser) {
-      // Reset to first step
-      currentStep = 0;
       setTimeout(highlightCurrentElement, 100);
     }
     
-    // Cleanup when component is destroyed
     return () => {
       if (isBrowser) {
         cleanupHighlights();
@@ -199,7 +201,6 @@
     };
   });
   
-  // Watch for changes to isOpen
   $: {
     if (isOpen && isBrowser) {
       setTimeout(highlightCurrentElement, 100);
@@ -211,17 +212,14 @@
   $: currentTutorialStep = tutorialSteps[currentStep];
   $: isLastStep = currentStep === tutorialSteps.length - 1;
 
-  // Handle close button click
   function handleCloseClick() {
     closeTutorial();
   }
 
-  // Handle next button click
   function handleNextClick() {
     nextStep();
   }
 
-  // Handle previous button click
   function handlePrevClick() {
     prevStep();
   }
@@ -230,7 +228,6 @@
 <!-- Tutorial overlay -->
 {#if isOpen && currentTutorialStep}
   <div class="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-    <!-- Popup with its own positioning -->
     <div class="tutorial-popup bg-white rounded-lg p-4 shadow-lg max-w-xs absolute pointer-events-auto">
       <button 
         class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"

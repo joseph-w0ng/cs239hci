@@ -14,6 +14,7 @@
 	import TutorialOverlay from '$lib/components/custom/tutorialOverlay.svelte';
 	import { RotateCw } from 'lucide-svelte';
 	import { extractDomain } from '$lib/utilities';
+	import CookiePreferences from '$lib/components/custom/cookiePref.svelte';
 
 	let cookies = $state<CookieWithCategory[]>([]);
 	let isChrome = $state(typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.id);
@@ -326,35 +327,43 @@
 	</div>
 
 	<div class="flex gap-2">
-		<!-- Tutorial button using plain HTML button -->
+		<!-- Tutorial button -->
 		<button 
-		class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2"
-		on:click={toggleTutorial}
-	  >
-		<span class="text-xs">?</span>
-	  </button>
+		  class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3 py-2"
+		  on:click={toggleTutorial}
+		  title="Show Tutorial"
+		>
+		  <span class="text-xs">?</span>
+		</button>
+		
+		<!-- Compact Cookie Preferences button-->
+		<div class="preferences-button">
+			<CookiePreferences />
+		  </div>
 		
 		<!-- Refresh button -->
 		<button
-		class="refresh-button inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
-		on:click={refreshCookies}
-		disabled={isLoading}
-	  >
-		{#if isLoading}
-		  Loading...
-		{:else}
-		  <RotateCw class="size-2" /> Cookies
-		{/if}
-	  </button>
-
+		  class="refresh-button inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
+		  on:click={refreshCookies}
+		  disabled={isLoading}
+		  title="Refresh Cookies"
+		>
+		  {#if isLoading}
+			Loading...
+		  {:else}
+			<RotateCw class="size-2" />
+		  {/if}
+		</button>
+	  
 		<!-- Manage blocked cookies button -->
 		<a 
-			href="/block_list"
-			class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+		  href="/block_list"
+		  class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+		  title="Manage Blocked Cookies"
 		>
-			Manage Blocked Cookies
+		  Manage Blocked Cookies
 		</a>
-	</div>
+	  </div>
 </header>
 
 <ThirdPartyAlert {activeDomain} {groupedCookies} {deleteSelectedCookies} />
